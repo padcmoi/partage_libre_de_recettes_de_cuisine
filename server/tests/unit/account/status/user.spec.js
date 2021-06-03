@@ -4,7 +4,7 @@ const request = require('supertest')('http://127.0.0.1:3000')
 const { Misc, Db } = require('../../../../middleware/index')
 
 describe('GET /account/status/user/:user', () => {
-  let csrf_header, urn1, urn2
+  let csrf_header, urn1, urn2, settings
 
   const fixtures = {
     username: '_' + Misc.getRandomStr(20),
@@ -16,13 +16,32 @@ describe('GET /account/status/user/:user', () => {
   }
   const non_existent_data = '_' + Misc.getRandomStr(25)
 
-  beforeEach(async () => {
-    if (!csrf_header) {
-      csrf_header = await request
-        .get('/csrf/generate')
-        .then((response) => response.body.csrf_token)
-      if (!csrf_header) csrf_header = ''
-    }
+  beforeAll(async () => {
+    // Restaure la table settings au paramètres d'origines
+    select = await Db.get({
+      query: 'SELECT maintenance,can_create_account FROM settings LIMIT 1',
+    })
+    settings = select && select[0]
+
+    await Db.merge({
+      query: 'UPDATE settings SET ? LIMIT 1',
+      preparedStatement: [{ maintenance: 0, can_create_account: 1 }],
+    })
+    // Restaure la table settings au paramètres d'origines
+
+    csrf_header = await request
+      .get('/csrf/generate')
+      .then((response) => response.body.csrf_token)
+    if (!csrf_header) csrf_header = ''
+  })
+
+  afterAll(async () => {
+    // Restaure la table settings au paramètres administrateurs
+    await Db.merge({
+      query: 'UPDATE settings SET ? LIMIT 1',
+      preparedStatement: [settings],
+    })
+    // Restaure la table settings au paramètres administrateurs
   })
 
   it('Create fixtures', async (done) => {
@@ -65,7 +84,7 @@ describe('GET /account/status/user/:user', () => {
   describe('If isAvailable is true', () => {
     let body
 
-    beforeEach(async () => {
+    beforeAll(async () => {
       body = await urn1
         .set('csrf-token', csrf_header)
         .then((response) => response.body)
@@ -80,10 +99,11 @@ describe('GET /account/status/user/:user', () => {
       done()
     })
   })
+
   describe('If isAvailable is false', () => {
     let body
 
-    beforeEach(async () => {
+    beforeAll(async () => {
       body = await urn2
         .set('csrf-token', csrf_header)
         .then((response) => response.body)
@@ -98,6 +118,30 @@ describe('GET /account/status/user/:user', () => {
       done()
     })
   })
+
+  describe('Mode maintenance', () => {
+    let body
+
+    beforeAll(async () => {
+      // On active le mode maintenance sur l'Api
+      await Db.merge({
+        query: 'UPDATE settings SET ? LIMIT 1',
+        preparedStatement: [{ maintenance: 1 }],
+      })
+      // On active le mode maintenance sur l'Api
+
+      body = await request
+        .get('/account/status/user/' + fixtures.username)
+        .set('csrf-token', csrf_header)
+        .then((response) => response.body)
+    })
+
+    it('isAvailable always Truthy', (done) => {
+      expect(body.isAvailable).toBeTruthy()
+      done()
+    })
+  })
+
   it('Delete fixtures', async (done) => {
     const row_deleted = await Db.delete({
       query: 'DELETE FROM account WHERE ? LIMIT 1',

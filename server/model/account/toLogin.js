@@ -1,4 +1,4 @@
-const { Db, Form, Jwt, Password } = require('../../middleware/index')
+const { Db, Form, Jwt, Password, Settings } = require('../../middleware/index')
 const dotenv = require('dotenv')
 dotenv.config()
 
@@ -34,6 +34,13 @@ module.exports = async function (_ = { params }) {
 
   let isLock = accountData && accountData.is_lock ? true : false
   let isLoggedIn = accountData && !isLock && isValidPassword ? true : false
+  let isAdmin = accountData && accountData.is_admin ? true : false
+  const maintenance = await Settings.maintenance()
+
+  if (!isAdmin && maintenance) {
+    // Maintenance
+    isLoggedIn = false
+  }
 
   if (isLock || !isValidPassword) {
     accountData = null
@@ -41,10 +48,7 @@ module.exports = async function (_ = { params }) {
 
   if (!isLock && isLoggedIn) {
     access_token = await Jwt.get({
-      // access_token: null,
       userId: (accountData && accountData.id) || -1,
-      // isLoggedIn,
-      // isAdmin: accountData && accountData.is_admin ? true : false,
     })
 
     await Db.merge({
@@ -63,18 +67,21 @@ module.exports = async function (_ = { params }) {
     console.warn('Login: ' + _.params.user + ' / OK')
   }
 
-  if (isLock) {
+  if (!isAdmin && maintenance) {
+    // Maintenance
+    toastMessage.push({ msg: 'Application en maintenance' })
+    console.warn('Login: ' + _.params.user + ' / MAINTENANCE')
+  } else if (isLock) {
     toastMessage.push({ msg: 'Compte verrouillé' })
     console.warn('Login: ' + _.params.user + ' / LOCKED')
   } else if (!isLoggedIn) {
     toastMessage.push({ msg: 'Identification incorrecte' })
     console.warn('Login: ' + _.params.user + ' / FAIL')
   }
-
   const result = {
     isLock,
     isLoggedIn,
-    isAdmin: accountData && accountData.is_admin ? true : false,
+    isAdmin,
     firstName: (accountData && accountData.firstname) || undefined,
     lastName: (accountData && accountData.lastname) || undefined,
     toastMessage,

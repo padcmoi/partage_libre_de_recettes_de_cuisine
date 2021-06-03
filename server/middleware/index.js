@@ -5,5 +5,6 @@ const Jwt = require('./js/jwt')
 const Misc = require('./js/misc')
 const View = require('./js/view')
 const Password = require('./js/password')
+const Settings = require('./js/settings')
 
-module.exports = { Csrf, Db, Form, Jwt, Misc, View, Password }
+module.exports = { Csrf, Db, Form, Jwt, Misc, View, Password, Settings }

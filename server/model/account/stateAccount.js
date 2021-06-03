@@ -1,4 +1,4 @@
-const { Db, Jwt } = require('../../middleware/index')
+const { Db, Jwt, Settings } = require('../../middleware/index')
 const dotenv = require('dotenv')
 dotenv.config()
 
@@ -59,6 +59,10 @@ module.exports = async function (_ = { access_token }) {
         query: 'UPDATE account SET `is_logged_in` = 0 WHERE ? LIMIT 1',
         preparedStatement: [{ id: parseInt(userId) }],
       })
+    }
+    if (!isAdmin && (await Settings.maintenance())) {
+      // Maintenance
+      isLoggedIn = false
     }
 
     response = {

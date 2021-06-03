@@ -1,4 +1,4 @@
-const { Db } = require('../../middleware/index')
+const { Db, Settings } = require('../../middleware/index')
 const dotenv = require('dotenv')
 dotenv.config()
 
@@ -9,6 +9,12 @@ dotenv.config()
  */
 module.exports = async function (_ = { mail }) {
   const mail = _.mail.toLowerCase() || ''
+  if (await Settings.maintenance()) {
+    // maintenance
+    return {
+      isAvailable: true,
+    }
+  }
 
   // SELECT * FROM account WHERE `id` = 1 AND `jwt_hash` = MD5('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3NfdG9rZW4iOm51bGwsInVzZXJJZCI6MSwidXNlcm5hbWUiOiJwYWRjbW9pIiwiaXNMb2dnZWRJbiI6dHJ1ZSwiaXNBZG1pbiI6ZmFsc2UsImlhdCI6MTYxNjIwMDU2MSwiZXhwIjoxNjE2MjAwNTkxfQ.44Q6te_RKwcgRPAuOwBQASQOXS7WjjYwKuBDvQnAWN0') LIMIT 1
   let data = await Db.get({

@@ -5,10 +5,22 @@ const { Misc, Db, Form, Password } = require('../../../middleware/index')
 const { passwordGenerator } = require('../_misc/index')
 
 describe('POST /account/register', () => {
-  let csrf_header, fixtures
+  let csrf_header, fixtures, settings
   const urn = '/account/register'
 
   beforeAll(async () => {
+    // Restaure la table settings au paramètres d'origines
+    let select = await Db.get({
+      query: 'SELECT maintenance,can_create_account FROM settings LIMIT 1',
+    })
+    settings = select && select[0]
+
+    await Db.merge({
+      query: 'UPDATE settings SET ? LIMIT 1',
+      preparedStatement: [{ maintenance: 0, can_create_account: 1 }],
+    })
+    // Restaure la table settings au paramètres d'origines
+
     csrf_header = await request
       .get('/csrf/generate')
       .then((response) => response.body.csrf_token)
@@ -34,6 +46,13 @@ describe('POST /account/register', () => {
       query: 'DELETE FROM account WHERE ? LIMIT 1',
       preparedStatement: { username: Form.sanitizeString(fixtures.user) },
     })
+
+    // Restaure la table settings au paramètres administrateurs
+    await Db.merge({
+      query: 'UPDATE settings SET ? LIMIT 1',
+      preparedStatement: [settings],
+    })
+    // Restaure la table settings au paramètres administrateurs
   })
 
   describe('Account created with successfull', () => {
@@ -205,6 +224,163 @@ describe('POST /account/register', () => {
         .set('csrf-token', csrf_header)
         .send({ params })
         .then((response) => response.body)
+    })
+
+    for (const [key, value] of Object.entries(expected_values)) {
+      it(`${key}`, (done) => {
+        expect(response[key]).toStrictEqual(value)
+        done()
+      })
+    }
+  })
+
+  describe('Account failed for maintenance', () => {
+    let response
+    const expected_values = {
+      isRegistered: false,
+      toastMessage: [{ msg: 'Application en maintenance' }],
+    }
+
+    beforeAll(async () => {
+      // On active le mode maintenance sur l'Api
+      await Db.merge({
+        query: 'UPDATE settings SET ? LIMIT 1',
+        preparedStatement: [{ maintenance: 1, can_create_account: 0 }],
+      })
+      // On active le mode maintenance sur l'Api
+
+      const password_generated = '&' + passwordGenerator()
+      const mail_generated = Misc.getRandomStr(20) + '@units_tests.na'
+
+      const params = {
+        user: '&_' + Misc.getRandomStr(15),
+        password1: password_generated,
+        password2: password_generated,
+        email1: '&_' + mail_generated,
+        email2: '&_' + mail_generated,
+        firstname: '&_Tests',
+        lastname: '&_UNITS',
+        captcha: '',
+      }
+
+      response = await request
+        .post(urn)
+        .set('csrf-token', csrf_header)
+        .send({ params })
+        .then((response) => response.body)
+    })
+
+    afterAll(async () => {
+      // Restaure la table settings au paramètres administrateurs
+      await Db.merge({
+        query: 'UPDATE settings SET ? LIMIT 1',
+        preparedStatement: [settings],
+      })
+      // Restaure la table settings au paramètres administrateurs
+    })
+
+    for (const [key, value] of Object.entries(expected_values)) {
+      it(`${key}`, (done) => {
+        expect(response[key]).toStrictEqual(value)
+        done()
+      })
+    }
+  })
+  describe('Account failed for disabled register', () => {
+    let response
+    const expected_values = {
+      isRegistered: false,
+      toastMessage: [{ msg: 'Création de compte indisponible' }],
+    }
+
+    beforeAll(async () => {
+      // On active le mode maintenance sur l'Api
+      await Db.merge({
+        query: 'UPDATE settings SET ? LIMIT 1',
+        preparedStatement: [{ maintenance: 0, can_create_account: 0 }],
+      })
+      // On active le mode maintenance sur l'Api
+
+      const password_generated = '&' + passwordGenerator()
+      const mail_generated = Misc.getRandomStr(20) + '@units_tests.na'
+
+      const params = {
+        user: '&_' + Misc.getRandomStr(15),
+        password1: password_generated,
+        password2: password_generated,
+        email1: '&_' + mail_generated,
+        email2: '&_' + mail_generated,
+        firstname: '&_Tests',
+        lastname: '&_UNITS',
+        captcha: '',
+      }
+
+      response = await request
+        .post(urn)
+        .set('csrf-token', csrf_header)
+        .send({ params })
+        .then((response) => response.body)
+    })
+
+    afterAll(async () => {
+      // Restaure la table settings au paramètres administrateurs
+      await Db.merge({
+        query: 'UPDATE settings SET ? LIMIT 1',
+        preparedStatement: [settings],
+      })
+      // Restaure la table settings au paramètres administrateurs
+    })
+
+    for (const [key, value] of Object.entries(expected_values)) {
+      it(`${key}`, (done) => {
+        expect(response[key]).toStrictEqual(value)
+        done()
+      })
+    }
+  })
+  describe('Account failed for maintenance && disabled register', () => {
+    let response
+    const expected_values = {
+      isRegistered: false,
+      toastMessage: [{ msg: 'Application en maintenance' }],
+    }
+
+    beforeAll(async () => {
+      // On active le mode maintenance sur l'Api
+      await Db.merge({
+        query: 'UPDATE settings SET ? LIMIT 1',
+        preparedStatement: [{ maintenance: 1, can_create_account: 0 }],
+      })
+      // On active le mode maintenance sur l'Api
+
+      const password_generated = '&' + passwordGenerator()
+      const mail_generated = Misc.getRandomStr(20) + '@units_tests.na'
+
+      const params = {
+        user: '&_' + Misc.getRandomStr(15),
+        password1: password_generated,
+        password2: password_generated,
+        email1: '&_' + mail_generated,
+        email2: '&_' + mail_generated,
+        firstname: '&_Tests',
+        lastname: '&_UNITS',
+        captcha: '',
+      }
+
+      response = await request
+        .post(urn)
+        .set('csrf-token', csrf_header)
+        .send({ params })
+        .then((response) => response.body)
+    })
+
+    afterAll(async () => {
+      // Restaure la table settings au paramètres administrateurs
+      await Db.merge({
+        query: 'UPDATE settings SET ? LIMIT 1',
+        preparedStatement: [settings],
+      })
+      // Restaure la table settings au paramètres administrateurs
     })
 
     for (const [key, value] of Object.entries(expected_values)) {

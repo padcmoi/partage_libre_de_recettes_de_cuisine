@@ -1,4 +1,4 @@
-const { Db, Form, Misc, Password } = require('../../middleware/index')
+const { Db, Form, Misc, Password, Settings } = require('../../middleware/index')
 const dotenv = require('dotenv')
 dotenv.config()
 
@@ -64,11 +64,13 @@ module.exports = async function (_ = { params }) {
       ? select[0]
       : { id: null, username: null, mail: null }
 
-  const isRegistered = data.id ? false : true
+  let isRegistered = data.id ? false : true
+  const maintenance = await Settings.maintenance()
+  const can_create_account = await Settings.can_create_account()
   // Vérifie si existe en base de données pour eviter une erreur
   const toastMessage = []
 
-  if (isRegistered) {
+  if (isRegistered && !maintenance && can_create_account) {
     Db.withTransaction() // prochaine requete SQL en transaction
     await Db.commit({
       query: 'INSERT INTO account SET ?',
@@ -79,13 +81,24 @@ module.exports = async function (_ = { params }) {
     })
     console.warn('Register: ' + _.params.user + ' / OK')
   } else {
-    if (data.username === _.params.user) {
-      toastMessage.push({ msg: "Le nom d'utilisateur est déja pris" })
-      console.warn('Register: ' + _.params.user + ' / USER FAIL')
-    }
-    if (data.mail === _.params.email1) {
-      toastMessage.push({ msg: "L'adresse de courriel est déja prise" })
-      console.warn('Register: ' + _.params.user + ' / MAIL FAIL')
+    if (maintenance) {
+      // Maintenance
+      toastMessage.push({ msg: 'Application en maintenance' })
+      isRegistered = false
+      console.warn('Register: ' + _.params.user + ' / MAINTENANCE')
+    } else if (!can_create_account) {
+      toastMessage.push({ msg: 'Création de compte indisponible' })
+      isRegistered = false
+      console.warn('Register: ' + _.params.user + ' / DISABLED REGISTER')
+    } else {
+      if (data.username === _.params.user) {
+        toastMessage.push({ msg: "Le nom d'utilisateur est déja pris" })
+        console.warn('Register: ' + _.params.user + ' / USER FAIL')
+      }
+      if (data.mail === _.params.email1) {
+        toastMessage.push({ msg: "L'adresse de courriel est déja prise" })
+        console.warn('Register: ' + _.params.user + ' / MAIL FAIL')
+      }
     }
   }
 

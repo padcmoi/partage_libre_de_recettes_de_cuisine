@@ -4,7 +4,7 @@ const { Misc, Db, Password } = require('../../../middleware/index')
 const request = require('supertest')('http://127.0.0.1:3000')
 
 describe('GET /account/check', () => {
-  let fixtures
+  let fixtures, settings
   const expected_values = {
     access_token: null,
     userId: -1,
@@ -14,6 +14,29 @@ describe('GET /account/check', () => {
     firstname: null,
     lastname: null,
   }
+
+  beforeAll(async () => {
+    // Restaure la table settings au paramètres d'origines
+    select = await Db.get({
+      query: 'SELECT maintenance,can_create_account FROM settings LIMIT 1',
+    })
+    settings = select && select[0]
+
+    await Db.merge({
+      query: 'UPDATE settings SET ? LIMIT 1',
+      preparedStatement: [{ maintenance: 0, can_create_account: 1 }],
+    })
+    // Restaure la table settings au paramètres d'origines
+  })
+
+  afterAll(async () => {
+    // Restaure la table settings au paramètres administrateurs
+    await Db.merge({
+      query: 'UPDATE settings SET ? LIMIT 1',
+      preparedStatement: [settings],
+    })
+    // Restaure la table settings au paramètres administrateurs
+  })
 
   describe('Send fake or empty token', () => {
     describe('Check Default Values', () => {
@@ -144,6 +167,27 @@ describe('GET /account/check', () => {
           expect(expected_values[key]).toStrictEqual(response[key])
         })
       }
+    })
+
+    describe('Check Values updated then maintenance', () => {
+      let response
+
+      beforeAll(async () => {
+        // On active le mode maintenance sur l'Api
+        await Db.merge({
+          query: 'UPDATE settings SET ? LIMIT 1',
+          preparedStatement: [{ maintenance: 1 }],
+        })
+        // On active le mode maintenance sur l'Api
+
+        response = await request
+          .get('/account/check?access_token=' + expected_values.access_token)
+          .then((response) => response.body)
+      })
+
+      it(`isLoggedIn`, () => {
+        expect(response['isLoggedIn']).toStrictEqual(false)
+      })
     })
   })
 
