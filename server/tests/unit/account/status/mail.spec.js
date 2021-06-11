@@ -42,6 +42,12 @@ describe('GET /account/status/mail/:mail', () => {
       preparedStatement: [settings],
     })
     // Restaure la table settings au paramètres administrateurs
+
+    // Restaure l'auto incrémentation
+    await Db.merge({
+      query: 'ALTER TABLE `account` auto_increment = 1;',
+    })
+    // Restaure l'auto incrémentation
   })
 
   it('Create fixtures', async (done) => {

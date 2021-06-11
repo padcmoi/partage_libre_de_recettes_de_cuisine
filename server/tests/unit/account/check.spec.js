@@ -36,6 +36,12 @@ describe('GET /account/check', () => {
       preparedStatement: [settings],
     })
     // Restaure la table settings au paramètres administrateurs
+
+    // Restaure l'auto incrémentation
+    await Db.merge({
+      query: 'ALTER TABLE `account` auto_increment = 1;',
+    })
+    // Restaure l'auto incrémentation
   })
 
   describe('Send fake or empty token', () => {
