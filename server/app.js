@@ -25,6 +25,7 @@ if (require('./app/cluster')) {
     // .use('/test', require('./controller/test'))
     .use('/csrf', require('./controller/csrf'))
     .use('/account', require('./controller/account'))
+    .use('/app', require('./controller/app'))
 
   // error handler
   app
