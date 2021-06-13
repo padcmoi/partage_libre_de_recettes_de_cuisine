@@ -17,7 +17,7 @@ Inspiré d'un projet O'Clock du même thème + d'infos https://www.youtube.com/w
 - ✔️ Dashboard
 - ✔️ RGPD / Récupération de données
 - ✔️ Cloture du compte (les infos seront limitées)
-- ❌ Suppression totale du compte (Le nom et le courriel seront supprimés)
+- ❌ Suppression totale du compte (Le nom et le courriel seront renommés)
 - ✔️ Ajouter une recette (description, étapes, 3 images)
 - ✔️ Ajouter un ingredient (parmi les groupes d'ingredients proposés)
 - ✔️ Donner un avis like ou dislike sur une recette
@@ -31,8 +31,9 @@ Inspiré d'un projet O'Clock du même thème + d'infos https://www.youtube.com/w
 - ✔️ Gérer les catégories de plat
 - ✔️ Gérer les régimes alimentaires
 - ✔️ Modèrer les commentaires
-- ✔️ Vérrouiller un utilisateur
-
+- ✔️ Vérrouiller un compte
+- ✔️ Gestion des comptes
+- ✔️ Suppression totale d'un compte
 
 #### 📝 Front
 - ✔️ Web APP SPA Vue Bootstrap & tests unitaires
