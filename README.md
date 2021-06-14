@@ -1,7 +1,7 @@
 ### 📦 Partage ta recettes 📦
 
-##### *Ce projet a été réalisé dans le seul but d'apprendre à titre personnel*
-Webapp de partage de recettes de cuisine totalement personnalisable avec Shopping list, commentaires/avis
+##### *Ce projet a été réalisé dans le seul but d'apprendre à titre personnel et de mettre en pratique mes acquis, il y aura probablement des commits excessifs mais l'application à terme sera stable et pleinement fonctionnelle sur la durée, c'est l'objectif*
+Webapp de partage de recettes de cuisine/cocktails? totalement personnalisable avec Shopping list, commentaires/avis
 
 Inspiré d'un projet O'Clock du même thème + d'infos https://www.youtube.com/watch?v=B-olvh8Y2_Q
 
