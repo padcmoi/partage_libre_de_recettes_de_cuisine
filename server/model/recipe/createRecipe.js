@@ -28,7 +28,7 @@ module.exports = async function (access_token, params) {
     // Accepted data
     if (processData.failProcess.length === 0 && accountFromToken.id) {
       const insert = Object.assign(processData.dataProcessed, {
-        created_by: parseInt(accountFromToken.id),
+        created_by: accountFromToken.username,
       })
 
       Db.withTransaction() // prochaine requete SQL en transaction
