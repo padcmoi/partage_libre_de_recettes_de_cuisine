@@ -3,6 +3,8 @@ const { Db, Jwt, Misc } = require('../../../middleware/index')
 module.exports = async function (access_token, slug) {
   let data, alreadyExist, slugExist
 
+  access_token = 'test'
+
   const accountFromToken = await Jwt.myInformation(access_token)
   const response = { success: false, toastMessage: [] }
 

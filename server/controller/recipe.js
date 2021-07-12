@@ -6,32 +6,38 @@ const router = express.Router()
 const csurf = require('csurf')({ cookie: true })
 
 router
-
+  // POST
   .get('/', async function (req, res, next) {
     View.json(res, await modelRecipe.list(req.query))
   })
-
   .get('/:slug', async function (req, res, next) {
     const slug = req.params.slug || ''
     View.json(res, await modelRecipe.view(req.query, slug))
   })
-
   .get('/misc/form', csurf, async function (req, res, next) {
     View.json(res, await modelRecipe.misc.form(req))
   })
+  .get('/favorite/:slug', async function (req, res, next) {
+    const access_token = req.query['access_token'] || ''
+    const slug = req.params.slug || ''
+    View.json(res, await modelRecipe.favorite.add(access_token, slug))
+  })
 
+  // POST
   .post('/', async function (req, res, next) {
     if (!(await Csrf.isValidHeader(req, res))) return
     const access_token = req.query['access_token'] || ''
     const params = req.body.params || {}
     View.json(res, await modelRecipe.create(access_token, params))
   })
-
-  .post('/:slug/favorite', async function (req, res, next) {
+  .post('/favorite/:slug', async function (req, res, next) {
+    if (!(await Csrf.isValidHeader(req, res))) return
     const access_token = req.query['access_token'] || ''
     const slug = req.params.slug || ''
     View.json(res, await modelRecipe.favorite.add(access_token, slug))
   })
+
+  // POST
 
   .put('/:slug', async function (req, res, next) {
     if (!(await Csrf.isValidHeader(req, res))) return
@@ -41,18 +47,22 @@ router
     View.json(res, await modelRecipe.change(access_token, params, slug))
   })
 
+  // POST
+
   .delete('/:slug', async function (req, res, next) {
     if (!(await Csrf.isValidHeader(req, res))) return
     const access_token = req.query['access_token'] || ''
     const slug = req.params.slug || ''
     View.json(res, await modelRecipe.delete(access_token, slug))
   })
-
-  .delete('/:slug/favorite', async function (req, res, next) {
+  .delete('/favorite/:slug', async function (req, res, next) {
+    if (!(await Csrf.isValidHeader(req, res))) return
     const access_token = req.query['access_token'] || ''
     const slug = req.params.slug || ''
     View.json(res, await modelRecipe.favorite.remove(access_token, slug))
   })
+
+  // DEVTEST
 
   .get('/test/:slug/:slug2', async function (req, res, next) {
     console.log('Controller Test params:' + req.params.slug)
