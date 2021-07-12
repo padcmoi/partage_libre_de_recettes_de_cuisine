@@ -1,7 +1,5 @@
-const { Db, Form, Jwt, Password, Settings } = require('../../middleware/index')
-const RecipeManager = require('./constructor/RecipeManager')
-const dotenv = require('dotenv')
-dotenv.config()
+const { Db, Form, Jwt, Settings } = require('../../middleware/index')
+const { RecipeManager, PictureManager } = require('../../constructor/index')
 
 module.exports = async function (access_token, params) {
   const accountFromToken = await Jwt.myInformation(access_token)
@@ -41,10 +39,16 @@ module.exports = async function (access_token, params) {
         type: 'success',
         msg: `Recette ${processData.dataProcessed.title} ajouté`,
       })
+
       response.success = true
       response.failProcess = processData.failProcess
       response.slug = processData.dataProcessed.slug
       response.title = processData.dataProcessed.title
+
+      // Prépare l'emplacement pour stocker les images
+      const pictureManager = new PictureManager(response.slug)
+      await pictureManager.deleteSpace() // Effacer les eventuelles images
+      await pictureManager.createSpace() // Créer un nouvel espace
     }
     // Refused data
     else {

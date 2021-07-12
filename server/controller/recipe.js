@@ -3,50 +3,101 @@ const modelRecipe = require('../model/recipe')
 
 const express = require('express')
 const router = express.Router()
+const csurf = require('csurf')({ cookie: true })
 
 router
 
   .get('/', async function (req, res, next) {
-    const view = { slug: 'all' }
-
-    View.json(res, view)
+    View.json(res, await modelRecipe.list(req.query))
   })
 
   .get('/:slug', async function (req, res, next) {
     const slug = req.params.slug || ''
-    const query = req.query
-    const view = { slug, query }
-    View.json(res, view)
+    View.json(res, await modelRecipe.view(req.query, slug))
+  })
+
+  .get('/misc/form', csurf, async function (req, res, next) {
+    View.json(res, await modelRecipe.misc.form(req))
   })
 
   .post('/', async function (req, res, next) {
     if (!(await Csrf.isValidHeader(req, res))) return
-
     const access_token = req.query['access_token'] || ''
-    const view = await modelRecipe.createRecipe(access_token, req.body.params)
+    const params = req.body.params || {}
+    View.json(res, await modelRecipe.create(access_token, params))
+  })
 
-    View.json(res, view)
+  .post('/:slug/favorite', async function (req, res, next) {
+    const access_token = req.query['access_token'] || ''
+    const slug = req.params.slug || ''
+    View.json(res, await modelRecipe.favorite.add(access_token, slug))
   })
 
   .put('/:slug', async function (req, res, next) {
     if (!(await Csrf.isValidHeader(req, res))) return
-
-    const access_token = req.query['access_token']
+    const access_token = req.query['access_token'] || ''
     const slug = req.params.slug || ''
-    const params = {
-      todo: req.body.params.todo || null,
-    }
-
-    View.json(res, {})
+    const params = req.body.params || {}
+    View.json(res, await modelRecipe.change(access_token, params, slug))
   })
 
   .delete('/:slug', async function (req, res, next) {
     if (!(await Csrf.isValidHeader(req, res))) return
-
-    const access_token = req.query['access_token']
+    const access_token = req.query['access_token'] || ''
     const slug = req.params.slug || ''
+    View.json(res, await modelRecipe.delete(access_token, slug))
+  })
 
-    View.json(res, {})
+  .delete('/:slug/favorite', async function (req, res, next) {
+    const access_token = req.query['access_token'] || ''
+    const slug = req.params.slug || ''
+    View.json(res, await modelRecipe.favorite.remove(access_token, slug))
+  })
+
+  .get('/test/:slug/:slug2', async function (req, res, next) {
+    console.log('Controller Test params:' + req.params.slug)
+
+    const slug = req.params.slug || ''
+    const slug2 = req.params.slug2 || ''
+    const params = {
+      // title: 'Pizza Chorizo L\'"olive',
+      // title: 'pizza cannibale',
+      // title: 'pizza cannibale2',
+      // title: 'pizza végétarienne',
+      // title: 'pizza marguerite',
+      title: slug,
+      description: 'baba',
+      seasons: ['spring', 'winter'],
+      // seasons: ['winter', 'autumn', 'summer', 'spring'],
+      difficulty: 'EaSy',
+      nutriscore: 'e',
+      preparation_time: 601.99,
+      cooking_time: 300.12,
+      category: 'Plat',
+      // lock: false, // Pour ajouter des images alors on verrouille la recette
+      temporary: true, // Pour ajouter des images alors on verrouille la recette
+    }
+
+    // const view = await modelRecipe.change('test', params, slug2)
+    const view = await modelRecipe.create('test', params)
+    // await modelRecipe.create('test', params)
+    // const view = await modelRecipe.delete('test', slug)
+
+    View.json(res, view)
+  })
+
+  .get('/disable/abc/:slug2', async function (req, res, next) {
+    console.log('Controller Test params:' + req.params.slug)
+
+    const slug2 = req.params.slug2 || ''
+    const params = {
+      // lock: false, // Pour ajouter des images alors on verrouille la recette
+      temporary: false, // Pour ajouter des images alors on verrouille la recette
+    }
+
+    const view = await modelRecipe.change('test', params, slug2)
+
+    View.json(res, view)
   })
 
 module.exports = router

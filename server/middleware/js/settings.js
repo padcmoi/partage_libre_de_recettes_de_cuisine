@@ -1,6 +1,4 @@
 const Db = require('./db')
-const dotenv = require('dotenv')
-dotenv.config()
 
 const db = {
   async load() {

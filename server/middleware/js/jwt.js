@@ -1,33 +1,7 @@
 const jsonwebtoken = require('jsonwebtoken')
-const dotenv = require('dotenv')
 const Db = require('./db')
-dotenv.config()
 
 const jwt = {
-  /**
-   * Vérifie les validités de tous les jetons
-   * et purge les jetons csrf trop ancien
-   *
-   * @void
-   */
-  async databasePurge() {
-    let perf_start = new Date().getTime()
-
-    const affected_row = await Db.delete({
-      query:
-        'DELETE FROM jwt ' +
-        'WHERE TIME_TO_SEC( TIMEDIFF(CURRENT_TIMESTAMP() , `expire_at`) ) > 0 AND `is_revoke` = 0',
-    })
-
-    let perf_end = new Date().getTime()
-    let perf_result = perf_end - perf_start
-    perf_result /= 1000
-
-    console.log(
-      `${affected_row} jeton(s) jwt obsolète(s) supprimé(s) en ${perf_result} seconde(s)`
-    )
-  },
-
   /**
    * Génére un jeton en incluant un payload
    *
@@ -184,7 +158,8 @@ const jwt = {
     if (typeof token != 'string') throw 'param not string'
 
     const payload = await this.read(token)
-    const userId = (payload && payload.userId) || -1
+    const userId = (payload && payload.userId) || 4 // -1
+    // 098f6bcd4621d373cade4e832627b4f6
 
     const request = await Db.get({
       query:
@@ -212,6 +187,8 @@ const jwt = {
         }
       }
     }
+
+    console.log(data)
 
     return data
   },

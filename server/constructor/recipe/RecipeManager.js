@@ -1,6 +1,5 @@
-const dataProcess = require('./dataProcess')
-const dotenv = require('dotenv')
-dotenv.config()
+const Misc = require('../../middleware/js/misc')
+const dataProcess = require('./DataProcess')
 
 /**
  * @params {Object} (form_data) Données de formulaire
@@ -34,7 +33,7 @@ module.exports = class RecipeManager {
     this.PRIVATE = {
       make: false,
       check: false,
-      _translate: false,
+      toastMessage: false,
     }
     await this._make()
     await this._check()
@@ -45,6 +44,121 @@ module.exports = class RecipeManager {
       dataProcessed: this.data_process,
       toastMessage: this.toastMessage,
     }
+  }
+
+  /**
+   * @STATIC
+   * Génére des données requise à partir des données clientes
+   *
+   * @param {Array} params
+   * @returns {Array}
+   */
+  static makeRequired(params) {
+    const required = []
+
+    for (const key in params) {
+      switch (key) {
+        case 'title':
+          required.push('slugTitle')
+          break
+        case 'description':
+          required.push('description')
+          break
+        case 'seasons':
+          required.push('seasons')
+          break
+        case 'difficulty':
+          required.push('difficulty')
+          break
+        case 'nutriscore':
+          required.push('nutriscore')
+          break
+        case 'preparation_time':
+          required.push('preparationTime')
+          break
+        case 'cooking_time':
+          required.push('cookingTime')
+          break
+        case 'category':
+          required.push('category')
+          break
+      }
+    }
+
+    return required
+  }
+
+  /**
+   * @STATIC
+   * Réorganise les données en provenance de la base de données
+   * - définit une valeur par défaut à @count_pictures
+   * - insert dans un tableau de valeurs @pictures :
+   *
+   * @param {Object} req_data
+   * @returns {Object} req_data
+   */
+  static picturesReorder(req_data) {
+    const MAX_PICTURES = parseInt(process.env.MAX_PICTURES) || 7
+
+    const picturesList = []
+
+    for (let i = 0; i < MAX_PICTURES; i++) {
+      picturesList.push(`show_picture_num${i}`)
+    }
+
+    for (const data of req_data) {
+      if (!data.count_pictures) {
+        data.count_pictures = parseInt(0)
+      }
+
+      data.pictures = []
+
+      for (const picture of picturesList) {
+        if (data[picture]) {
+          data.pictures.push(data[picture])
+        }
+
+        delete data[picture]
+      }
+    }
+
+    return req_data
+  }
+
+  /**
+   * @PUBLIC
+   * Nettoie les données pour la lecture
+   * c'est la procèdure inverse pour l'ajout/modification de données
+   *
+   * @param {Object} data
+   * @returns {Object}
+   */
+  static sanitizeRead(data) {
+    // Transforme en tableau les saisons
+    data.seasons = []
+
+    if (data.season_winter === 1) data.seasons.push('winter')
+    if (data.season_autumn === 1) data.seasons.push('autumn')
+    if (data.season_summer === 1) data.seasons.push('summer')
+    if (data.season_spring === 1) data.seasons.push('spring')
+
+    delete data.season_winter
+    delete data.season_autumn
+    delete data.season_summer
+    delete data.season_spring
+
+    // On rend un minimum l'anonymat dans les noms de famille
+    data.lastname = Misc.truncate(data.lastname, 1)
+    data.lastname += '.'
+
+    // On change en Boolean
+    data.locked_comment = data.locked_comment === 1 || false
+    data.has_favorite = data.has_favorite === 1 || false
+
+    // Supprime ce qui est inutile pour le client
+    delete data.is_lock
+
+    return data
   }
 
   /**
@@ -85,6 +199,12 @@ module.exports = class RecipeManager {
           break
         case 'category':
           await this.dataProcess.makeCategory()
+          break
+        case 'lock':
+          await this.dataProcess.makeLock()
+          break
+        case 'temporary':
+          await this.dataProcess.makeTemporary()
           break
       }
     }

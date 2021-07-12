@@ -23,6 +23,7 @@ describe('POST /account/register', () => {
 
     csrf_header = await request
       .get('/csrf/generate')
+      .set({ 'csrf-token': '' })
       .then((response) => response.body.csrf_token)
     if (!csrf_header) csrf_header = ''
 

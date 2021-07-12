@@ -1,6 +1,11 @@
+const path = require('path')
+
+const UPLOAD_FOLDER = process.env.UPLOAD_FOLDER || 'files_uploads'
+
+const staticFolder = {
+  root: path.join(__dirname, '../../' + UPLOAD_FOLDER + '/'),
+}
 const { end } = require('../../app/perf')
-const dotenv = require('dotenv')
-dotenv.config()
 
 const json = function (res, view) {
   view.execution_time = { ms: end() }
@@ -9,4 +14,8 @@ const json = function (res, view) {
   res.json(view)
 }
 
-module.exports = { json }
+const sendfile = function (res, file) {
+  res.sendFile(file, staticFolder)
+}
+
+module.exports = { json, sendfile }

@@ -1,7 +1,5 @@
-const Misc = require('../../../middleware/js/misc')
-const Db = require('../../../middleware/js/db')
-const dotenv = require('dotenv')
-dotenv.config()
+const Misc = require('../../middleware/js/misc')
+const Db = require('../../middleware/js/db')
 
 /**
  * @params {Object} (form_data) Données de formulaire
@@ -20,6 +18,8 @@ module.exports = class DataProcess {
       cookingTime: false,
       preparationTime: false,
       category: false,
+      isLock: false,
+      isTemporary: false,
     }
 
     this.form_data = form_data
@@ -259,6 +259,57 @@ module.exports = class DataProcess {
       return (this._state.category = obj && obj.category ? true : false)
     } else {
       return (this._state.category = false)
+    }
+  }
+
+  /**
+   * @PUBLIC
+   * Check la valeur & convertit cette valeur
+   *
+   * requiert un composant select radio à choix unique
+   *
+   * @returns {Boolean} Success?
+   */
+  async makeLock() {
+    if (typeof this.form_data.lock === 'boolean') {
+      const is_lock = this.form_data.lock ? 1 : 0
+
+      Object.assign(this.data_process, { is_lock })
+
+      return (this._state.isLock = this.form_data.lock)
+    } else {
+      return (this._state.isLock = false)
+    }
+  }
+
+  /**
+   * @PUBLIC
+   * Check la valeur & convertit cette valeur
+   *
+   * à placer sur un formulaire qui validera étape par étape
+   * le mode temporaire est à utiliser pour pouvoir créer la recette
+   * la cacher afin d'ajouter les images (requiert une clé étrangère)
+   * à la fin de la validation étape on cache ce mode
+   *
+   * Condition:
+   * - Si l'utilisateur abandonne la création de recette, il pourra envoyer un delete/:slug à l'Api
+   * - Si l'utilisateur quitte le formulaire, alors la recette sera purgé sous 24 heures,
+   * l'utilisateur pourra toutefois reprendre la recette abandonnée à condition qu'il le fasse avant 24 heures
+   *
+   * @returns {Boolean} Success?
+   */
+  async makeTemporary() {
+    this.form_data.lock = this.form_data.temporary
+    await this.makeLock()
+
+    if (typeof this.form_data.temporary === 'boolean') {
+      const temporary = this.form_data.temporary ? 1 : 0
+
+      Object.assign(this.data_process, { temporary })
+
+      return (this._state.isTemporary = this.form_data.temporary)
+    } else {
+      return (this._state.isTemporary = false)
     }
   }
 }

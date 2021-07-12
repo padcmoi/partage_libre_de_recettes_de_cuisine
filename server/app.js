@@ -4,8 +4,6 @@ const logger = require('morgan')
 const cors = require('cors')
 const cookieParser = require('cookie-parser')
 const { start, end } = require('./app/perf')
-const readDir = require('readdir')
-const controllerFiles = readDir.readSync('controller/', ['**.js'])
 const dotenv = require('dotenv')
 dotenv.config()
 
@@ -23,11 +21,14 @@ if (require('./app/cluster')) {
       next() // pass control to the next handler
     })
 
-  for (const file of controllerFiles) {
-    const _file = file.split('.')[0] || ''
-    if (_file.length === 0) continue
+  for (const file of require('readdir').readSync('controller/', ['*.js'])) {
+    const split = file.split('.')[0] || []
+    if (split.length === 0) continue
 
-    app.use(`/${_file}`, require(`./controller/${_file}`))
+    const route = '/' + split.charAt(0).toUpperCase() + split.slice(1)
+    const path = require(`./controller/${file}`)
+
+    app.use(route, path)
   }
 
   // error handler
@@ -40,6 +41,7 @@ if (require('./app/cluster')) {
         api_response: 'forbidden request',
         execution_time: { ms: end() },
       }
+      console.log('err: ' + req.url)
 
       res.locals.message = err.message
       res.locals.error = req.app.get('env') === 'development' ? err : {}
