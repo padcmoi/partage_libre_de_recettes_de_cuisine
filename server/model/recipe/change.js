@@ -1,4 +1,4 @@
-const { Db, Form, Jwt } = require('../../middleware/index')
+const { Db, Form, Jwt, Misc } = require('../../middleware/index')
 const { RecipeManager, PictureManager } = require('../../constructor/index')
 
 module.exports = async function (access_token, params, slug) {
@@ -8,14 +8,10 @@ module.exports = async function (access_token, params, slug) {
 
   Form.sanitizeEachData(params, ['seasons'])
   if (accountFromToken) {
-    const data = await Db.get({
-      query: 'SELECT slug,title FROM recipes WHERE ? AND ? LIMIT 1',
-      preparedStatement: [{ created_by: accountFromToken.username }, { slug }],
-    })
-    const currentRecipe = (data && data[0]) || {}
-    const isMine = data && data[0] ? true : false
+    const isMyRecipe = await Misc.isMyRecipe(accountFromToken.username, slug)
+    const isMine = isMyRecipe.isMine
 
-    if (params.title === currentRecipe.title) {
+    if (params.title === isMyRecipe.currentRecipe.title) {
       delete params.title
     }
 
@@ -51,12 +47,12 @@ module.exports = async function (access_token, params, slug) {
 
         toastMessage.push({
           type: 'success',
-          msg: `Modification de la recette ${currentRecipe.title}`,
+          msg: `Modification de la recette ${isMyRecipe.currentRecipe.title}`,
         })
       } else {
         toastMessage.push({
           type: 'warning',
-          msg: `Aucun changement pour la recette ${currentRecipe.title}`,
+          msg: `Aucun changement pour la recette ${isMyRecipe.currentRecipe.title}`,
         })
       }
     } else if (!isMine) {

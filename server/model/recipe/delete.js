@@ -1,4 +1,4 @@
-const { Db, Jwt } = require('../../middleware/index')
+const { Db, Jwt, Misc } = require('../../middleware/index')
 const { PictureManager } = require('../../constructor/index')
 
 module.exports = async function (access_token, slug) {
@@ -7,16 +7,10 @@ module.exports = async function (access_token, slug) {
   const response = { success: false, delete: false }
 
   if (accountFromToken) {
-    const data = await Db.get({
-      query: 'SELECT slug,title FROM `recipes` WHERE ? AND ? LIMIT 1',
-      preparedStatement: [{ created_by: accountFromToken.username }, { slug }],
-    })
-
-    const currentRecipe = (data && data[0]) || {}
-    const isMine = data && data[0] ? true : false
+    const isMyRecipe = await Misc.isMyRecipe(accountFromToken.username, slug)
 
     // Accepted data
-    if (accountFromToken.id && isMine) {
+    if (accountFromToken.id && isMyRecipe.isMine) {
       const _delete = await Db.delete({
         query: 'DELETE FROM `recipes` WHERE ? AND ? LIMIT 1',
         preparedStatement: [
@@ -35,10 +29,10 @@ module.exports = async function (access_token, slug) {
 
         toastMessage.push({
           type: 'success',
-          msg: `Suppression de la recette ${currentRecipe.title}`,
+          msg: `Suppression de la recette ${isMyRecipe.currentRecipe.title}`,
         })
       }
-    } else if (!isMine) {
+    } else if (!isMyRecipe.isMine) {
       toastMessage.push({
         type: 'error',
         msg: 'Cette recette ne vous appartient pas !',

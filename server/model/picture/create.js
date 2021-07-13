@@ -6,9 +6,7 @@ const del = require('del')
 const UPLOAD_FOLDER = process.env.UPLOAD_FOLDER || 'files_uploads'
 
 module.exports = async function (req) {
-  let data,
-    isMine,
-    max_uploads,
+  let max_uploads,
     response = { success: false, toastMessage: [] }
 
   const access_token = req.body['access_token'] || ''
@@ -20,12 +18,7 @@ module.exports = async function (req) {
   if (req.files[0] && accountFromToken) {
     max_uploads = await Misc.getMaxUploads(accountFromToken.username)
 
-    data = await Db.get({
-      query: 'SELECT slug FROM `recipes` WHERE ? AND ? LIMIT 1',
-      preparedStatement: [{ created_by: accountFromToken.username }, { slug }],
-    })
-
-    isMine = data && data[0] ? true : false
+    const isMyRecipe = await Misc.isMyRecipe(accountFromToken.username, slug)
 
     const files = req.files
     response.toastMessage = files[0].toastMessage
@@ -40,7 +33,7 @@ module.exports = async function (req) {
     }
 
     // Accepted data
-    if (!isMine) {
+    if (!isMyRecipe.isMine) {
       files[0].passedTest = false
       response.toastMessage.push({
         type: 'error',
