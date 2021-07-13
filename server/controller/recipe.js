@@ -35,6 +35,12 @@ router
     const slug = req.params.slug || ''
     View.json(res, await modelRecipe.favorite.add(access_token, slug))
   })
+  .post('/comment/:slug', async function (req, res, next) {
+    if (!(await Csrf.isValidHeader(req, res))) return
+    const access_token = req.query['access_token'] || ''
+    const slug = req.params.slug || ''
+    View.json(res, {})
+  })
 
   // POST
 
@@ -51,6 +57,12 @@ router
     const note = req.params.note || 0
     View.json(res, await modelRecipe.note.set(access_token, slug, note))
   })
+  .put('/comment/:slug', async function (req, res, next) {
+    if (!(await Csrf.isValidHeader(req, res))) return
+    const access_token = req.query['access_token'] || ''
+    const slug = req.params.slug || ''
+    View.json(res, {})
+  })
 
   // POST
 
@@ -65,6 +77,12 @@ router
     const access_token = req.query['access_token'] || ''
     const slug = req.params.slug || ''
     View.json(res, await modelRecipe.favorite.remove(access_token, slug))
+  })
+  .delete('/comment/:slug', async function (req, res, next) {
+    if (!(await Csrf.isValidHeader(req, res))) return
+    const access_token = req.query['access_token'] || ''
+    const slug = req.params.slug || ''
+    View.json(res, {})
   })
 
   // DEVTEST
