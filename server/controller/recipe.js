@@ -6,7 +6,7 @@ const router = express.Router()
 const csurf = require('csurf')({ cookie: true })
 
 router
-  // POST
+  // GET
   .get('/', async function (req, res, next) {
     View.json(res, await modelRecipe.list(req.query))
   })
@@ -42,8 +42,7 @@ router
     View.json(res, {})
   })
 
-  // POST
-
+  // PUT
   .put('/:slug', async function (req, res, next) {
     if (!(await Csrf.isValidHeader(req, res))) return
     const access_token = req.query['access_token'] || ''
@@ -64,8 +63,7 @@ router
     View.json(res, {})
   })
 
-  // POST
-
+  // DELETE
   .delete('/:slug', async function (req, res, next) {
     if (!(await Csrf.isValidHeader(req, res))) return
     const access_token = req.query['access_token'] || ''
@@ -86,7 +84,6 @@ router
   })
 
   // DEVTEST
-
   .get('/test/:slug/:slug2', async function (req, res, next) {
     console.log('Controller Test params:' + req.params.slug)
 
