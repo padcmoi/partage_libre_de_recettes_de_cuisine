@@ -17,10 +17,9 @@ router
   .get('/misc/form', csurf, async function (req, res, next) {
     View.json(res, await modelRecipe.misc.form(req))
   })
-  .get('/favorite/:slug', async function (req, res, next) {
-    const access_token = req.query['access_token'] || ''
+  .get('/note/:slug', async function (req, res, next) {
     const slug = req.params.slug || ''
-    View.json(res, await modelRecipe.favorite.add(access_token, slug))
+    View.json(res, await modelRecipe.note.get(slug))
   })
 
   // POST
@@ -45,6 +44,12 @@ router
     const slug = req.params.slug || ''
     const params = req.body.params || {}
     View.json(res, await modelRecipe.change(access_token, params, slug))
+  })
+  .put('/note/:slug/:note', async function (req, res, next) {
+    const access_token = req.query['access_token'] || ''
+    const slug = req.params.slug || ''
+    const note = req.params.note || 0
+    View.json(res, await modelRecipe.note.set(access_token, slug, note))
   })
 
   // POST

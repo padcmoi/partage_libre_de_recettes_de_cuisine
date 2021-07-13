@@ -27,4 +27,5 @@ module.exports = {
   list: require('./recipe/list'),
   misc: require('./recipe/misc'),
   view: require('./recipe/view'),
+  note: require('./recipe/note'),
 }
