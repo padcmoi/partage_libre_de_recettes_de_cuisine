@@ -37,9 +37,7 @@ router
   })
   .post('/comment/:slug', async function (req, res, next) {
     if (!(await Csrf.isValidHeader(req, res))) return
-    const access_token = req.query['access_token'] || ''
-    const slug = req.params.slug || ''
-    View.json(res, {})
+    View.json(res, await modelRecipe.comment.post(req))
   })
 
   // PUT
@@ -56,11 +54,9 @@ router
     const note = req.params.note || 0
     View.json(res, await modelRecipe.note.set(access_token, slug, note))
   })
-  .put('/comment/:slug', async function (req, res, next) {
+  .put('/comment/:slug/:id', async function (req, res, next) {
     if (!(await Csrf.isValidHeader(req, res))) return
-    const access_token = req.query['access_token'] || ''
-    const slug = req.params.slug || ''
-    View.json(res, {})
+    View.json(res, await modelRecipe.comment.change(req))
   })
 
   // DELETE
@@ -76,11 +72,9 @@ router
     const slug = req.params.slug || ''
     View.json(res, await modelRecipe.favorite.remove(access_token, slug))
   })
-  .delete('/comment/:slug', async function (req, res, next) {
+  .delete('/comment/:slug/:id', async function (req, res, next) {
     if (!(await Csrf.isValidHeader(req, res))) return
-    const access_token = req.query['access_token'] || ''
-    const slug = req.params.slug || ''
-    View.json(res, {})
+    View.json(res, await modelRecipe.comment.delete(req))
   })
 
   // DEVTEST

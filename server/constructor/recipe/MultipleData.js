@@ -97,7 +97,7 @@ module.exports = class MultipleData {
 
       preparedStatement: [
         Db.toSqlString(
-          'r.comment, r.created_by, ' +
+          'r.id_comment, r.comment, r.created_by, ' +
             'DATE_FORMAT(`created_at`, "%d/%m/%Y %H:%i:%s") AS created_at, ' +
             'DATE_FORMAT(`updated_at`, "%d/%m/%Y %H:%i:%s") AS updated_at, ' +
             'wio.firstname, wio.lastname '

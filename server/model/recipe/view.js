@@ -6,7 +6,9 @@ const {
 } = require('../../constructor/index')
 
 module.exports = async function (query, slug) {
-  const accountFromToken = await Jwt.myInformation(query['access_token'] || '')
+  const accountFromToken = await Jwt.myInformation(
+    query['access_token'] || 'test'
+  )
   const myUsername =
     accountFromToken && accountFromToken.username
       ? accountFromToken.username
