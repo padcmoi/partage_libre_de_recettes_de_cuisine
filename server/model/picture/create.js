@@ -90,7 +90,7 @@ module.exports = async function (req) {
         ],
       })
 
-      const view = await modelRecipe.view(req.query, slug)
+      const view = await modelRecipe.view(req)
 
       response.pictures = view.pictures || []
     } else {

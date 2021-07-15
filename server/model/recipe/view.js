@@ -5,10 +5,11 @@ const {
   ReorganizeData,
 } = require('../../constructor/index')
 
-module.exports = async function (query, slug) {
-  const accountFromToken = await Jwt.myInformation(
-    query['access_token'] || 'test'
-  )
+module.exports = async function (_req) {
+  let query = _req.query,
+    slug = _req.params.slug || ''
+
+  const accountFromToken = await Jwt.myInformation(query['access_token'] || '')
   const myUsername =
     accountFromToken && accountFromToken.username
       ? accountFromToken.username

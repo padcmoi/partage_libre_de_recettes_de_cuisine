@@ -1,5 +1,9 @@
-const passwordGenerator = require('./passwordGenerator')
-const randomArray = require('./randomArray')
-const randomStr = require('./randomStr')
-
-module.exports = { passwordGenerator, randomArray, randomStr }
+module.exports = {
+  passwordGenerator: require('./passwordGenerator'),
+  randomArray: require('./randomArray'),
+  randomStr: require('./randomStr'),
+  getCsrfToken: require('./getCsrfToken'),
+  FixtureManager: require('./FixtureManager'),
+  SettingManager: require('./SettingManager'),
+  goLogin: require('./goLogin'),
+}

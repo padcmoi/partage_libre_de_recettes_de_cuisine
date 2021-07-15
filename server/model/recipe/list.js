@@ -1,7 +1,9 @@
 const { Db, Bootstrap, Settings, Jwt, Misc } = require('../../middleware/index')
 const { RecipeManager } = require('../../constructor/index')
 
-module.exports = async function (query) {
+module.exports = async function (_req) {
+  let query = _req.query
+
   const accountFromToken = await Jwt.myInformation(query['access_token'] || '')
   const myUsername =
     accountFromToken && accountFromToken.username

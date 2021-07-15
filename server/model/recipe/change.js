@@ -1,7 +1,11 @@
 const { Db, Form, Jwt, Misc } = require('../../middleware/index')
 const { RecipeManager, PictureManager } = require('../../constructor/index')
 
-module.exports = async function (access_token, params, slug) {
+module.exports = async function (_req) {
+  let access_token = _req.query['access_token'] || '',
+    slug = _req.params.slug || '',
+    params = _req.body.params || {}
+
   const accountFromToken = await Jwt.myInformation(access_token)
   const toastMessage = []
   const response = { success: false, merge: false }

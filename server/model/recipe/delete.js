@@ -1,7 +1,10 @@
 const { Db, Jwt, Misc } = require('../../middleware/index')
 const { PictureManager } = require('../../constructor/index')
 
-module.exports = async function (access_token, slug) {
+module.exports = async function (_req) {
+  let access_token = _req.query['access_token'] || '',
+    slug = _req.params.slug || ''
+
   const accountFromToken = await Jwt.myInformation(access_token)
   const toastMessage = []
   const response = { success: false, delete: false }

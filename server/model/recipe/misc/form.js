@@ -3,8 +3,6 @@ const { MultipleData } = require('../../../constructor/index')
 const generate = require('../../csrf/generate')
 
 module.exports = async function (req) {
-  // req.headers['csrf-token'] = 'test' // TO_DELETE
-
   // Pour les formulaires
   let response = await generate(req, req.csrfToken())
   delete response.expire_at
