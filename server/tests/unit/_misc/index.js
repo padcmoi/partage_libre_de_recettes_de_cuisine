@@ -6,4 +6,6 @@ module.exports = {
   FixtureManager: require('./FixtureManager'),
   SettingManager: require('./SettingManager'),
   goLogin: require('./goLogin'),
+  Recipe: require('./recipe/Recipe'),
+  getCategorie: require('./recipe/getCategorie'),
 }
