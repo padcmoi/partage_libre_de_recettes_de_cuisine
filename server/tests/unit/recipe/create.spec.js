@@ -11,7 +11,7 @@ const {
   goLogin,
 } = require('../_misc/index')
 
-describe('POST /recipe/favorite/:slug', () => {
+describe('POST /recipe', () => {
   let fixtureManager,
     settingManager,
     sql_request,
