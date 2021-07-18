@@ -9,7 +9,7 @@ const {
   goLogin,
 } = require('./_misc/index')
 
-describe('POST /recipe/favorite/:slug', () => {
+describe('GET /test', () => {
   let fixtureManager,
     settingManager,
     sql_request,
@@ -28,7 +28,7 @@ describe('POST /recipe/favorite/:slug', () => {
     origin_settings = await settingManager.getOriginData()
     await settingManager.setDefault()
 
-    fixtures = await fixtureManager.getFixtures()
+    fixtures = await fixtureManager.get()
 
     login_response = await goLogin(request, fixtures.username, '&_tests_units')
 
@@ -54,6 +54,6 @@ describe('POST /recipe/favorite/:slug', () => {
 
   afterAll(async () => {
     await settingManager.restoreDefault()
-    await fixtureManager.removeFixtures()
+    // await fixtureManager.remove()
   })
 })

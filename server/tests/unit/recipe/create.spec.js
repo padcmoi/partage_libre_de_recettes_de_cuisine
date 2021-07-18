@@ -1,7 +1,7 @@
 const dotenv = require('dotenv')
 dotenv.config()
 const request = require('supertest')('http://127.0.0.1:3000')
-const { Misc, Db, Password, Form } = require('../../../middleware/index')
+const { Form } = require('../../../middleware/index')
 const { RecipeManager } = require('../../../constructor/index')
 const {
   getCsrfToken,
@@ -32,7 +32,7 @@ describe('POST /recipe', () => {
 
     await settingManager.setDefault()
 
-    fixtures = await fixtureManager.getFixtures()
+    fixtures = await fixtureManager.get()
 
     login_response = await goLogin(request, fixtures.username, '&_tests_units')
 
@@ -139,6 +139,5 @@ describe('POST /recipe', () => {
 
   afterAll(async () => {
     await settingManager.restoreDefault()
-    await fixtureManager.removeFixtures()
   })
 })

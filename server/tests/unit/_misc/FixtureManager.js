@@ -10,20 +10,86 @@ module.exports = class FixtureManager {
    * Création des fixtures
    * Insertion des fixtures en base de données
    *
+   * @returns {Object}
+   */
+  async get() {
+    await this.save()
+
+    return this.fixtures
+  }
+
+  /**
+   * Suppréssion des fixtures
+   * Suppréssion des fixtures en base de données
+   * Restaure l'auto-incrémentation
+   *
    * @void
    */
-  async createFixtures() {
-    if (this.fixtures) return
+  async remove() {
+    if (!this.fixtures) return
 
+    await Db.delete({
+      query: 'DELETE FROM `account` WHERE ? LIMIT 1',
+      preparedStatement: { username: this.fixtures.username },
+    })
+
+    await Db.merge({
+      query: 'ALTER TABLE `account` auto_increment = 1;',
+    })
+
+    this.fixtures = null
+  }
+
+  /**
+   * Suppréssion toutes les fixtures en base de données
+   * Restaure l'auto-incrémentation
+   *
+   * @void
+   */
+  async removeAll() {
+    await Db.delete({
+      query: 'DELETE FROM `account` WHERE ? AND ?',
+      preparedStatement: [
+        { firstname: 'Test___@units_tests.na' },
+        { lastname: 'TEST___@UNITS_TESTS.NA' },
+      ],
+    })
+
+    await Db.merge({
+      query: 'ALTER TABLE `account` auto_increment = 1;',
+    })
+  }
+
+  /**
+   * Création des fixtures
+   *
+   * @void
+   */
+  async generate() {
     this.fixtures = {
       username: '_' + Misc.getRandomStr(15),
       mail: '_' + Misc.getRandomStr(20) + '@units_tests.na',
       password: await Password.hash('&_tests_units'),
-      firstname: 'Tests',
-      lastname: 'UNITS',
+      firstname: 'Test___@units_tests.na',
+      lastname: 'TEST___@UNITS_TESTS.NA',
       is_lock: 0,
+      is_admin: 0,
       jwt_hash: '__tests_units',
     }
+
+    return this.fixtures
+  }
+
+  /**
+   * Création des fixtures
+   * Insertion des fixtures en base de données
+   *
+   * @void
+   */
+  async save() {
+    if (this.fixtures) return
+
+    await this.generate()
 
     const sql_request = await Db.get({
       query:
@@ -52,7 +118,7 @@ module.exports = class FixtureManager {
         console.error('Impossible de créer la fixture')
       } else {
         this.deadLoopCount += 1
-        await this.createFixtures()
+        await this.save()
       }
     } else {
       this.deadLoopCount = 0
@@ -61,39 +127,5 @@ module.exports = class FixtureManager {
         preparedStatement: [this.fixtures],
       })
     }
-  }
-
-  /**
-   * Création des fixtures
-   * Insertion des fixtures en base de données
-   *
-   * @returns {Object}
-   */
-  async getFixtures() {
-    await this.createFixtures()
-
-    return this.fixtures
-  }
-
-  /**
-   * Suppréssion des fixtures
-   * Suppréssion des fixtures en base de données
-   * Restaure l'auto-incrémentation
-   *
-   * @void
-   */
-  async removeFixtures() {
-    if (!this.fixtures) return
-
-    await Db.delete({
-      query: 'DELETE FROM `account` WHERE ? LIMIT 1',
-      preparedStatement: { username: this.fixtures.username },
-    })
-
-    await Db.merge({
-      query: 'ALTER TABLE `account` auto_increment = 1;',
-    })
-
-    this.fixtures = null
   }
 }

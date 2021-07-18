@@ -1,400 +1,129 @@
 const dotenv = require('dotenv')
 dotenv.config()
 const request = require('supertest')('http://127.0.0.1:3000')
-const { Misc, Db, Form, Password } = require('../../../middleware/index')
-const { passwordGenerator } = require('../_misc/index')
+const { Db, Password, Form } = require('../../../middleware/index')
+const {
+  getCsrfToken,
+  SettingManager,
+  FixtureManager,
+  goLogin,
+} = require('../_misc/index')
 
 describe('POST /account/register', () => {
-  let csrf_header, fixtures, settings
-  const urn = '/account/register'
+  let fixtureManager,
+    settingManager,
+    sql_request,
+    csrf_header,
+    origin_settings,
+    fixtures,
+    login_response,
+    access_token,
+    params
 
   beforeAll(async () => {
-    // Restaure la table settings au paramètres d'origines
-    let select = await Db.get({
-      query: 'SELECT maintenance,can_create_account FROM settings LIMIT 1',
-    })
-    settings = select && select[0]
+    fixtureManager = new FixtureManager()
+    settingManager = new SettingManager()
 
-    await Db.merge({
-      query: 'UPDATE settings SET ? LIMIT 1',
-      preparedStatement: [{ maintenance: 0, can_create_account: 1 }],
-    })
-    // Restaure la table settings au paramètres d'origines
+    csrf_header = await getCsrfToken(request)
 
-    csrf_header = await request
-      .get('/csrf/generate')
-      .set({ 'csrf-token': '' })
-      .then((response) => response.body.csrf_token)
-    if (!csrf_header) csrf_header = ''
+    origin_settings = await settingManager.getOriginData()
+    await settingManager.setDefault()
 
-    const password_generated = '&' + passwordGenerator()
-    const mail_generated = Misc.getRandomStr(20) + '@units_tests.na'
+    fixtures = await fixtureManager.generate()
 
-    fixtures = {
-      user: '&_' + Misc.getRandomStr(15),
-      password1: password_generated,
-      password2: password_generated,
-      email1: '&_' + mail_generated,
-      email2: '&_' + mail_generated,
-      firstname: '&_Tests',
-      lastname: '&_UNITS',
+    params = {
+      user: fixtures.username,
+      password1: '&_tests_units',
+      password2: '&_tests_units',
+      email1: fixtures.mail,
+      email2: fixtures.mail,
+      firstname: fixtures.firstname,
+      lastname: fixtures.lastname,
       captcha: '',
     }
   })
 
-  afterAll(async () => {
-    await Db.delete({
-      query: 'DELETE FROM account WHERE ? LIMIT 1',
-      preparedStatement: { username: Form.sanitizeString(fixtures.user) },
-    })
+  it('Login successfull', async (done) => {
+    const response = await request
+      .post('/account/register')
+      .set('csrf-token', csrf_header)
+      .send({
+        params,
+      })
+      .then((response) => response.body)
 
-    // Restaure la table settings au paramètres administrateurs
+    expect(response.isRegistered).toBeTruthy()
+    expect(response.toastMessage.length).toBe(0)
+    done()
+  })
+  it('password bcrypt / comparaison hash', async (done) => {
+    sql_request = await Db.get({
+      query: 'SELECT * FROM account WHERE username = ? LIMIT 1',
+      preparedStatement: [Form.sanitizeString(fixtures.username)],
+    })
+    const account = sql_request && sql_request[0]
+
+    const isValidPassword = await Password.check(
+      params.password1,
+      account.password
+    )
+
+    expect(isValidPassword).toBeTruthy()
+    expect(params.password1).toStrictEqual(params.password2)
+    done()
+  })
+  it('Account failed with username & mail', async (done) => {
+    const response = await request
+      .post('/account/register')
+      .set('csrf-token', csrf_header)
+      .send({
+        params,
+      })
+      .then((response) => response.body)
+
+    expect(response.isRegistered).toBeFalsy()
+    expect(response.toastMessage.length).toBe(2)
+    done()
+  })
+  it('Account failed for maintenance', async (done) => {
+    // On active le mode maintenance sur l'Api
     await Db.merge({
       query: 'UPDATE settings SET ? LIMIT 1',
-      preparedStatement: [settings],
+      preparedStatement: [{ maintenance: 1 }],
     })
-    // Restaure la table settings au paramètres administrateurs
+    // On active le mode maintenance sur l'Api
 
-    // Restaure l'auto incrémentation
-    await Db.merge({
-      query: 'ALTER TABLE `account` auto_increment = 1;',
-    })
-    // Restaure l'auto incrémentation
+    fixtures = await fixtureManager.generate()
+
+    params = {
+      user: fixtures.username,
+      password1: '&_tests_units',
+      password2: '&_tests_units',
+      email1: fixtures.mail,
+      email2: fixtures.mail,
+      firstname: fixtures.firstname,
+      lastname: fixtures.lastname,
+      captcha: '',
+    }
+
+    const response = await request
+      .post('/account/register')
+      .set('csrf-token', csrf_header)
+      .send({
+        params,
+      })
+      .then((response) => response.body)
+
+    await settingManager.setDefault()
+
+    expect(response.isRegistered).toBeFalsy()
+    expect(response.toastMessage).toStrictEqual([
+      { msg: 'Application en maintenance' },
+    ])
+    done()
   })
 
-  describe('Account created with successfull', () => {
-    let response, select
-    const expected_values = {
-      isRegistered: true,
-      toastMessage: [],
-    }
-
-    beforeAll(async () => {
-      response = await request
-        .post(urn)
-        .set('csrf-token', csrf_header)
-        .send({
-          params: fixtures,
-        })
-        .then((response) => response.body)
-
-      let req = await Db.get({
-        query: 'SELECT * FROM account WHERE username = ? LIMIT 1',
-        preparedStatement: [Form.sanitizeString(fixtures.user)],
-      })
-
-      select = req && req[0]
-    })
-
-    for (const [key, value] of Object.entries(expected_values)) {
-      it(`${key}`, (done) => {
-        expect(response[key]).toStrictEqual(value)
-        done()
-      })
-    }
-
-    describe('Comparaison avec la base de données', () => {
-      it('username', async (done) => {
-        expect(
-          Misc.lowerCase(Form.sanitizeString(fixtures['user']))
-        ).toStrictEqual(select['username'])
-        done()
-      })
-      it('password bcrypt / comparaison hash', async (done) => {
-        const isValidPassword = await Password.check(
-          fixtures['password1'],
-          select['password']
-        )
-        if (!isValidPassword) {
-          console.log('LOGN>> ' + fixtures['user'])
-          console.log('PASS>> ' + fixtures['password1'])
-        }
-        expect(isValidPassword).toBeTruthy()
-        expect(fixtures['password1']).toStrictEqual(fixtures['password2'])
-        done()
-      })
-      it('mail', async (done) => {
-        expect(
-          Misc.lowerCase(Form.sanitizeString(fixtures['email1']))
-        ).toStrictEqual(select['mail'])
-        expect(
-          Misc.lowerCase(Form.sanitizeString(fixtures['email2']))
-        ).toStrictEqual(select['mail'])
-        done()
-      })
-      it('firstname', async (done) => {
-        expect(
-          Misc.capitalize(Form.sanitizeString(fixtures['firstname']))
-        ).toStrictEqual(select['firstname'])
-        done()
-      })
-      it('lastname', async (done) => {
-        expect(
-          Misc.upperCase(Form.sanitizeString(fixtures['lastname']))
-        ).toStrictEqual(select['lastname'])
-        done()
-      })
-      it('compte vérrouillé par défaut', async (done) => {
-        expect(select['is_lock']).toBe(1)
-        done()
-      })
-    })
-  })
-
-  describe('Account failed with username and mail', () => {
-    let response
-    const expected_values = {
-      isRegistered: false,
-      toastMessage: [
-        { msg: "Le nom d'utilisateur est déja pris" },
-        { msg: "L'adresse de courriel est déja prise" },
-      ],
-    }
-
-    beforeAll(async () => {
-      const params = fixtures
-
-      response = await request
-        .post(urn)
-        .set('csrf-token', csrf_header)
-        .send({ params })
-        .then((response) => response.body)
-    })
-
-    for (const [key, value] of Object.entries(expected_values)) {
-      it(`${key}`, (done) => {
-        expect(response[key]).toStrictEqual(value)
-        done()
-      })
-    }
-  })
-
-  describe('Account failed with username', () => {
-    let response
-    const expected_values = {
-      isRegistered: false,
-      toastMessage: [{ msg: "Le nom d'utilisateur est déja pris" }],
-    }
-
-    beforeAll(async () => {
-      const password_generated = '&' + passwordGenerator()
-      const mail_generated = Misc.getRandomStr(20) + '@units_tests.na'
-
-      const params = {
-        user: fixtures.user,
-        password1: password_generated,
-        password2: password_generated,
-        email1: '&_' + mail_generated,
-        email2: '&_' + mail_generated,
-        firstname: '&_Tests',
-        lastname: '&_UNITS',
-        captcha: '',
-      }
-
-      response = await request
-        .post(urn)
-        .set('csrf-token', csrf_header)
-        .send({ params })
-        .then((response) => response.body)
-    })
-
-    for (const [key, value] of Object.entries(expected_values)) {
-      it(`${key}`, (done) => {
-        expect(response[key]).toStrictEqual(value)
-        done()
-      })
-    }
-  })
-  describe('Account failed with mail', () => {
-    let response
-    const expected_values = {
-      isRegistered: false,
-      toastMessage: [{ msg: "L'adresse de courriel est déja prise" }],
-    }
-
-    beforeAll(async () => {
-      const password_generated = '&' + passwordGenerator()
-
-      const params = {
-        user: '&_' + Misc.getRandomStr(15),
-        password1: password_generated,
-        password2: password_generated,
-        email1: fixtures.email1,
-        email2: fixtures.email2,
-        firstname: '&_Tests',
-        lastname: '&_UNITS',
-        captcha: '',
-      }
-
-      response = await request
-        .post(urn)
-        .set('csrf-token', csrf_header)
-        .send({ params })
-        .then((response) => response.body)
-    })
-
-    for (const [key, value] of Object.entries(expected_values)) {
-      it(`${key}`, (done) => {
-        expect(response[key]).toStrictEqual(value)
-        done()
-      })
-    }
-  })
-
-  describe('Account failed for maintenance', () => {
-    let response
-    const expected_values = {
-      isRegistered: false,
-      toastMessage: [{ msg: 'Application en maintenance' }],
-    }
-
-    beforeAll(async () => {
-      // On active le mode maintenance sur l'Api
-      await Db.merge({
-        query: 'UPDATE settings SET ? LIMIT 1',
-        preparedStatement: [{ maintenance: 1, can_create_account: 0 }],
-      })
-      // On active le mode maintenance sur l'Api
-
-      const password_generated = '&' + passwordGenerator()
-      const mail_generated = Misc.getRandomStr(20) + '@units_tests.na'
-
-      const params = {
-        user: '&_' + Misc.getRandomStr(15),
-        password1: password_generated,
-        password2: password_generated,
-        email1: '&_' + mail_generated,
-        email2: '&_' + mail_generated,
-        firstname: '&_Tests',
-        lastname: '&_UNITS',
-        captcha: '',
-      }
-
-      response = await request
-        .post(urn)
-        .set('csrf-token', csrf_header)
-        .send({ params })
-        .then((response) => response.body)
-    })
-
-    afterAll(async () => {
-      // Restaure la table settings au paramètres administrateurs
-      await Db.merge({
-        query: 'UPDATE settings SET ? LIMIT 1',
-        preparedStatement: [settings],
-      })
-      // Restaure la table settings au paramètres administrateurs
-    })
-
-    for (const [key, value] of Object.entries(expected_values)) {
-      it(`${key}`, (done) => {
-        expect(response[key]).toStrictEqual(value)
-        done()
-      })
-    }
-  })
-  describe('Account failed for disabled register', () => {
-    let response
-    const expected_values = {
-      isRegistered: false,
-      toastMessage: [{ msg: 'Création de compte indisponible' }],
-    }
-
-    beforeAll(async () => {
-      // On active le mode maintenance sur l'Api
-      await Db.merge({
-        query: 'UPDATE settings SET ? LIMIT 1',
-        preparedStatement: [{ maintenance: 0, can_create_account: 0 }],
-      })
-      // On active le mode maintenance sur l'Api
-
-      const password_generated = '&' + passwordGenerator()
-      const mail_generated = Misc.getRandomStr(20) + '@units_tests.na'
-
-      const params = {
-        user: '&_' + Misc.getRandomStr(15),
-        password1: password_generated,
-        password2: password_generated,
-        email1: '&_' + mail_generated,
-        email2: '&_' + mail_generated,
-        firstname: '&_Tests',
-        lastname: '&_UNITS',
-        captcha: '',
-      }
-
-      response = await request
-        .post(urn)
-        .set('csrf-token', csrf_header)
-        .send({ params })
-        .then((response) => response.body)
-    })
-
-    afterAll(async () => {
-      // Restaure la table settings au paramètres administrateurs
-      await Db.merge({
-        query: 'UPDATE settings SET ? LIMIT 1',
-        preparedStatement: [settings],
-      })
-      // Restaure la table settings au paramètres administrateurs
-    })
-
-    for (const [key, value] of Object.entries(expected_values)) {
-      it(`${key}`, (done) => {
-        expect(response[key]).toStrictEqual(value)
-        done()
-      })
-    }
-  })
-  describe('Account failed for maintenance && disabled register', () => {
-    let response
-    const expected_values = {
-      isRegistered: false,
-      toastMessage: [{ msg: 'Application en maintenance' }],
-    }
-
-    beforeAll(async () => {
-      // On active le mode maintenance sur l'Api
-      await Db.merge({
-        query: 'UPDATE settings SET ? LIMIT 1',
-        preparedStatement: [{ maintenance: 1, can_create_account: 0 }],
-      })
-      // On active le mode maintenance sur l'Api
-
-      const password_generated = '&' + passwordGenerator()
-      const mail_generated = Misc.getRandomStr(20) + '@units_tests.na'
-
-      const params = {
-        user: '&_' + Misc.getRandomStr(15),
-        password1: password_generated,
-        password2: password_generated,
-        email1: '&_' + mail_generated,
-        email2: '&_' + mail_generated,
-        firstname: '&_Tests',
-        lastname: '&_UNITS',
-        captcha: '',
-      }
-
-      response = await request
-        .post(urn)
-        .set('csrf-token', csrf_header)
-        .send({ params })
-        .then((response) => response.body)
-    })
-
-    afterAll(async () => {
-      // Restaure la table settings au paramètres administrateurs
-      await Db.merge({
-        query: 'UPDATE settings SET ? LIMIT 1',
-        preparedStatement: [settings],
-      })
-      // Restaure la table settings au paramètres administrateurs
-    })
-
-    for (const [key, value] of Object.entries(expected_values)) {
-      it(`${key}`, (done) => {
-        expect(response[key]).toStrictEqual(value)
-        done()
-      })
-    }
+  afterAll(async () => {
+    await settingManager.restoreDefault()
   })
 })
