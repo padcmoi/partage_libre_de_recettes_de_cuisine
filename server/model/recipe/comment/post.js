@@ -18,7 +18,7 @@ module.exports = async (req) => {
 
         // Verifie si le slug existe
         if (await Misc.isSlugExist(slug)) {
-          await Db.commit({
+          response.commentById = await Db.commit({
             query: 'INSERT INTO `recipes_comments` SET ?',
             preparedStatement: [{ comment, slug, created_by }],
           })
