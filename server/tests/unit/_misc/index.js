@@ -9,4 +9,5 @@ module.exports = {
   doubleAccount: require('./doubleAccount'),
   Recipe: require('./recipe/Recipe'),
   getCategorie: require('./recipe/getCategorie'),
+  RecipeInstruction: require('./recipe/RecipeInstruction'),
 }

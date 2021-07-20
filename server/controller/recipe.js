@@ -33,6 +33,19 @@ router
     if (!(await Csrf.isValidHeader(req, res))) return
     View.json(res, await modelRecipe.comment.post(req))
   })
+  .post('/instruction/:slug/:position', async function (req, res, next) {
+    if (!(await Csrf.isValidHeader(req, res))) return
+    View.json(res, {
+      success: true,
+      instructionById: 0,
+      toastMessage: [{ msg: 'msg' }],
+      recipesInstructions: [
+        { num_step: 0, instruction: 'message_1' },
+        { num_step: 1, instruction: 'message_2' },
+        { num_step: 2, instruction: 'message_3' },
+      ],
+    })
+  })
 
   // PUT
   .put('/:slug', async function (req, res, next) {
@@ -46,6 +59,36 @@ router
     if (!(await Csrf.isValidHeader(req, res))) return
     View.json(res, await modelRecipe.comment.change(req))
   })
+  .put('/instruction/:slug/:position', async function (req, res, next) {
+    if (!(await Csrf.isValidHeader(req, res))) return
+    View.json(res, {
+      success: true,
+      instructionById: 0,
+      toastMessage: [{ msg: 'msg' }],
+      recipesInstructions: [
+        { num_step: 0, instruction: 'message_1' },
+        { num_step: 1, instruction: 'message_2' },
+        { num_step: 2, instruction: 'message_3' },
+      ],
+    })
+  })
+  .put(
+    '/instruction/:slug/position/:old/:new',
+    async function (req, res, next) {
+      if (!(await Csrf.isValidHeader(req, res))) return
+      View.json(res, {
+        success: true,
+        instructionById: 0,
+        toastMessage: [{ msg: 'msg' }],
+        recipesInstructions: [
+          { num_step: 0, instruction: 'Mettre du poivre', picture: null },
+          { num_step: 1, instruction: 'message_1' },
+          { num_step: 2, instruction: 'message_2' },
+          { num_step: 3, instruction: 'message_3' },
+        ],
+      })
+    }
+  )
 
   // DELETE
   .delete('/:slug', async function (req, res, next) {
@@ -59,6 +102,13 @@ router
   .delete('/comment/:slug/:id', async function (req, res, next) {
     if (!(await Csrf.isValidHeader(req, res))) return
     View.json(res, await modelRecipe.comment.delete(req))
+  })
+  .delete('/instruction/:slug/:position', async function (req, res, next) {
+    if (!(await Csrf.isValidHeader(req, res))) return
+    View.json(res, {
+      success: true,
+      toastMessage: [{ msg: 'msg' }],
+    })
   })
 
 module.exports = router
