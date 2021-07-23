@@ -128,8 +128,6 @@ describe('POST /instruction/:slug/:position', () => {
     it('Modif ! Instruction en position 2 devient position 0 & réorganise la liste', async (done) => {
       const response = await recipeInstruction.move(slug, 2, 0)
 
-      // console.log(response)
-
       const recipesInstructions = [
         { num_step: 0, instruction: 'Mettre du poivre' },
         { num_step: 1, instruction: 'message_step_0' },
@@ -153,7 +151,7 @@ describe('POST /instruction/:slug/:position', () => {
 
   describe('DELETE /instruction/:slug/:position', () => {
     it('Suppression ! Instruction supprimée en position 0 & réorganise la liste', async (done) => {
-      const response = await recipeInstruction.remove(slug, 2)
+      const response = await recipeInstruction.remove(slug, 0)
 
       const recipesInstructions = [
         { num_step: 0, instruction: 'message_step_0' },
