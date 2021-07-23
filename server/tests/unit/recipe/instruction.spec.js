@@ -11,7 +11,7 @@ const {
   RecipeInstruction,
 } = require('../_misc/index')
 
-describe('/recipe/favorite/:slug', () => {
+describe('POST /instruction/:slug/:position', () => {
   let csrf_header,
     settingManager,
     origin_settings,
@@ -62,7 +62,7 @@ describe('/recipe/favorite/:slug', () => {
   })
 
   describe('POST /instruction/:slug/:position', () => {
-    it('Ajout ! Instruction ajoutée en position 2', async (done) => {
+    it('Ajout ! Instruction ajoutée en position 2 & réorganise la liste', async (done) => {
       const params = {
         instruction: 'Mettre du sel',
         picture: null,
@@ -70,17 +70,31 @@ describe('/recipe/favorite/:slug', () => {
 
       const response = await recipeInstruction.add(slug, 2, params)
 
-      // console.log(response)
+      const recipesInstructions = [
+        { num_step: 0, instruction: 'message_step_0' },
+        { num_step: 1, instruction: 'message_step_1' },
+        { num_step: 2, instruction: 'Mettre du sel' },
+        { num_step: 3, instruction: 'message_step_2' },
+        { num_step: 4, instruction: 'message_step_3' },
+        { num_step: 5, instruction: 'message_step_4' },
+      ]
 
       expect(response.success).toBeTruthy()
       expect(response.instructionById).toBeGreaterThanOrEqual(0)
       expect(response.toastMessage.length).toBe(1)
-      // expect(response.recipesInstructions.length).toBeGreaterThanOrEqual(0)
+
+      for (let i = 0; i < recipesInstructions.length; i++) {
+        const api = response.recipesInstructions[i]
+        expect(api.picture).toBeNull()
+        delete api.id_instructions
+        delete api.picture
+        expect(api).toStrictEqual(recipesInstructions[i])
+      }
       done()
     })
   })
   describe('PUT /instruction/:slug/:position', () => {
-    it('Modif ! Instruction modifiée en position 2', async (done) => {
+    it("Modif ! Instruction modifiée en position 2 & décale l'ancienne instruction si besoin", async (done) => {
       const params = {
         instruction: 'Mettre du poivre',
         picture: null,
@@ -88,42 +102,77 @@ describe('/recipe/favorite/:slug', () => {
 
       const response = await recipeInstruction.change(slug, 2, params)
 
-      // console.log(response)
+      const recipesInstructions = [
+        { num_step: 0, instruction: 'message_step_0' },
+        { num_step: 1, instruction: 'message_step_1' },
+        { num_step: 2, instruction: 'Mettre du poivre' },
+        { num_step: 3, instruction: 'message_step_2' },
+        { num_step: 4, instruction: 'message_step_3' },
+        { num_step: 5, instruction: 'message_step_4' },
+      ]
 
       expect(response.success).toBeTruthy()
-      expect(response.instructionById).toBeGreaterThanOrEqual(0)
       expect(response.toastMessage.length).toBe(1)
-      // expect(response.recipesInstructions.length).toBeGreaterThanOrEqual(0)
+
+      for (let i = 0; i < recipesInstructions.length; i++) {
+        const api = response.recipesInstructions[i]
+        expect(api.picture).toBeNull()
+        delete api.id_instructions
+        delete api.picture
+        expect(api).toStrictEqual(recipesInstructions[i])
+      }
       done()
     })
   })
   describe('PUT /instruction/:slug/position/:old/:new', () => {
-    it('Modif ! Instruction en position 2 devient position 0', async (done) => {
-      const params = {
-        instruction: 'Mettre du poivre',
-        picture: null,
-      }
-
-      const response = await recipeInstruction.change(slug, 2, params)
+    it('Modif ! Instruction en position 2 devient position 0 & réorganise la liste', async (done) => {
+      const response = await recipeInstruction.move(slug, 2, 0)
 
       // console.log(response)
 
+      const recipesInstructions = [
+        { num_step: 0, instruction: 'Mettre du poivre' },
+        { num_step: 1, instruction: 'message_step_0' },
+        { num_step: 2, instruction: 'message_step_1' },
+        { num_step: 3, instruction: 'message_step_2' },
+        { num_step: 4, instruction: 'message_step_3' },
+        { num_step: 5, instruction: 'message_step_4' },
+      ]
+
       expect(response.success).toBeTruthy()
-      expect(response.instructionById).toBeGreaterThanOrEqual(0)
-      expect(response.toastMessage.length).toBe(1)
-      // expect(response.recipesInstructions.length).toBeGreaterThanOrEqual(0)
+
+      for (let i = 0; i < recipesInstructions.length; i++) {
+        const api = response.recipesInstructions[i]
+        delete api.id_instructions
+        delete api.picture
+        expect(api).toStrictEqual(recipesInstructions[i])
+      }
       done()
     })
   })
 
   describe('DELETE /instruction/:slug/:position', () => {
-    it('Suppression ! Instruction supprimée en position 0', async (done) => {
-      const response = await recipeInstruction.remove(slug, 0)
+    it('Suppression ! Instruction supprimée en position 0 & réorganise la liste', async (done) => {
+      const response = await recipeInstruction.remove(slug, 2)
 
-      // console.log(response)
+      const recipesInstructions = [
+        { num_step: 0, instruction: 'message_step_0' },
+        { num_step: 1, instruction: 'message_step_1' },
+        { num_step: 2, instruction: 'message_step_2' },
+        { num_step: 3, instruction: 'message_step_3' },
+        { num_step: 4, instruction: 'message_step_4' },
+      ]
 
       expect(response.success).toBeTruthy()
       expect(response.toastMessage.length).toBe(1)
+
+      for (let i = 0; i < recipesInstructions.length; i++) {
+        const api = response.recipesInstructions[i]
+        expect(api.picture).toBeNull()
+        delete api.id_instructions
+        delete api.picture
+        expect(api).toStrictEqual(recipesInstructions[i])
+      }
       done()
     })
   })

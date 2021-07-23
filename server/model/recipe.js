@@ -29,4 +29,5 @@ module.exports = {
   view: require('./recipe/view'),
   note: require('./recipe/note'),
   comment: require('./recipe/comment'),
+  instruction: require('./recipe/instruction'),
 }

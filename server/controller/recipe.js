@@ -35,16 +35,7 @@ router
   })
   .post('/instruction/:slug/:position', async function (req, res, next) {
     if (!(await Csrf.isValidHeader(req, res))) return
-    View.json(res, {
-      success: true,
-      instructionById: 0,
-      toastMessage: [{ msg: 'msg' }],
-      recipesInstructions: [
-        { num_step: 0, instruction: 'message_1' },
-        { num_step: 1, instruction: 'message_2' },
-        { num_step: 2, instruction: 'message_3' },
-      ],
-    })
+    View.json(res, await modelRecipe.instruction.add(req))
   })
 
   // PUT
@@ -61,30 +52,54 @@ router
   })
   .put('/instruction/:slug/:position', async function (req, res, next) {
     if (!(await Csrf.isValidHeader(req, res))) return
-    View.json(res, {
-      success: true,
-      instructionById: 0,
-      toastMessage: [{ msg: 'msg' }],
-      recipesInstructions: [
-        { num_step: 0, instruction: 'message_1' },
-        { num_step: 1, instruction: 'message_2' },
-        { num_step: 2, instruction: 'message_3' },
-      ],
-    })
+    View.json(res, await modelRecipe.instruction.change(req))
   })
   .put(
     '/instruction/:slug/position/:old/:new',
     async function (req, res, next) {
       if (!(await Csrf.isValidHeader(req, res))) return
+
       View.json(res, {
         success: true,
         instructionById: 0,
         toastMessage: [{ msg: 'msg' }],
         recipesInstructions: [
-          { num_step: 0, instruction: 'Mettre du poivre', picture: null },
-          { num_step: 1, instruction: 'message_1' },
-          { num_step: 2, instruction: 'message_2' },
-          { num_step: 3, instruction: 'message_3' },
+          {
+            id_instructions: 1,
+            num_step: 0,
+            instruction: 'Mettre du poivre',
+            picture: null,
+          },
+          {
+            id_instructions: 2,
+            num_step: 1,
+            instruction: 'message_step_0',
+            picture: null,
+          },
+          {
+            id_instructions: 3,
+            num_step: 2,
+            instruction: 'message_step_1',
+            picture: null,
+          },
+          {
+            id_instructions: 4,
+            num_step: 3,
+            instruction: 'message_step_2',
+            picture: null,
+          },
+          {
+            id_instructions: 5,
+            num_step: 4,
+            instruction: 'message_step_3',
+            picture: null,
+          },
+          {
+            id_instructions: 6,
+            num_step: 5,
+            instruction: 'message_step_4',
+            picture: null,
+          },
         ],
       })
     }
@@ -105,10 +120,7 @@ router
   })
   .delete('/instruction/:slug/:position', async function (req, res, next) {
     if (!(await Csrf.isValidHeader(req, res))) return
-    View.json(res, {
-      success: true,
-      toastMessage: [{ msg: 'msg' }],
-    })
+    View.json(res, await modelRecipe.instruction.remove(req))
   })
 
 module.exports = router
