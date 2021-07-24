@@ -92,6 +92,31 @@ describe('POST /instruction/:slug/:position', () => {
       }
       done()
     })
+
+    it('Ajout ! Test message erreur avec slug inexistant', async (done) => {
+      const response = await recipeInstruction.add('_dont_exist', 2, {
+        instruction: '_ne_doit_pas_etre_en_bdd',
+      })
+      expect(response.success).toBeFalsy()
+      expect(response.toastMessage.length).toBe(1)
+      done()
+    })
+    it('Ajout ! Test message erreur avec commentaire incorrect', async (done) => {
+      const response = await recipeInstruction.add(slug, 2, {})
+      expect(response.success).toBeFalsy()
+      expect(response.toastMessage.length).toBe(1)
+      done()
+    })
+    it('Ajout ! Test message erreur avec faux token', async (done) => {
+      recipeInstruction.token = 'fake'
+      const response = await recipeInstruction.add(slug, 2, {
+        instruction: '_ne_doit_pas_etre_en_bdd',
+      })
+      recipeInstruction.token = access_token
+      expect(response.success).toBeFalsy()
+      expect(response.toastMessage.length).toBe(1)
+      done()
+    })
   })
   describe('PUT /instruction/:slug/:position', () => {
     it("Modif ! Instruction modifiée en position 2 & décale l'ancienne instruction si besoin", async (done) => {
@@ -121,6 +146,31 @@ describe('POST /instruction/:slug/:position', () => {
         delete api.picture
         expect(api).toStrictEqual(recipesInstructions[i])
       }
+      done()
+    })
+
+    it('Modif ! Test message erreur avec slug inexistant', async (done) => {
+      const response = await recipeInstruction.change('_dont_exist', 2, {
+        instruction: '_ne_doit_pas_etre_en_bdd',
+      })
+      expect(response.success).toBeFalsy()
+      expect(response.toastMessage.length).toBe(1)
+      done()
+    })
+    it('Modif ! Test message erreur avec commentaire incorrect', async (done) => {
+      const response = await recipeInstruction.change(slug, 2, {})
+      expect(response.success).toBeFalsy()
+      expect(response.toastMessage.length).toBe(1)
+      done()
+    })
+    it('Modif ! Test message erreur avec faux token', async (done) => {
+      recipeInstruction.token = 'fake'
+      const response = await recipeInstruction.change(slug, 2, {
+        instruction: '_ne_doit_pas_etre_en_bdd',
+      })
+      recipeInstruction.token = access_token
+      expect(response.success).toBeFalsy()
+      expect(response.toastMessage.length).toBe(1)
       done()
     })
   })
@@ -171,6 +221,25 @@ describe('POST /instruction/:slug/:position', () => {
         delete api.picture
         expect(api).toStrictEqual(recipesInstructions[i])
       }
+      done()
+    })
+
+    it('Suppression ! Test message erreur avec slug inexistant', async (done) => {
+      const response = await recipeInstruction.remove('_dont_exist', 2, {
+        instruction: '_ne_doit_pas_etre_en_bdd',
+      })
+      expect(response.success).toBeFalsy()
+      expect(response.toastMessage.length).toBe(1)
+      done()
+    })
+    it('Suppression ! Test message erreur avec faux token', async (done) => {
+      recipeInstruction.token = 'fake'
+      const response = await recipeInstruction.remove(slug, 2, {
+        instruction: '_ne_doit_pas_etre_en_bdd',
+      })
+      recipeInstruction.token = access_token
+      expect(response.success).toBeFalsy()
+      expect(response.toastMessage.length).toBe(1)
       done()
     })
   })
