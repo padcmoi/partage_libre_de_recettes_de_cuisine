@@ -35,7 +35,7 @@ module.exports = async (req) => {
         })
         response.success = true
       } else if (!isMine) {
-        toastMessage.push({
+        response.toastMessage.push({
           type: 'error',
           msg: 'Cette recette ne vous appartient pas !',
         })
