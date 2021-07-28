@@ -163,4 +163,43 @@ module.exports = class MultipleData {
 
     return Object.assign(this.response, { unitsList })
   }
+
+  /**
+   * @PUBLIC
+   * Charge les Types de foods
+   *
+   * @param {String} slug
+   * @returns {Array}
+   */
+  async recipesFoodTypes(slug) {
+    let recipesFoodTypes = await Db.get({
+      query: 'SELECT `food` FROM `foods_types` WHERE ?',
+      preparedStatement: [{ slug }],
+    })
+
+    const foodsArray = []
+    for (const obj of recipesFoodTypes) {
+      if (!obj.food) continue
+      foodsArray.push(obj.food)
+    }
+
+    return Object.assign(this.response, { recipes_food_types: foodsArray })
+  }
+
+  /**
+   * @PUBLIC
+   * Charge les Ingredients de la recette
+   *
+   * @param {String} slug
+   * @returns {Array}
+   */
+  async recipesIngredients(slug) {
+    let ingredients = await Db.get({
+      query:
+        'SELECT `quantity`,`type`,`ingredient`,`unit` FROM `ingredients` WHERE ?',
+      preparedStatement: [{ slug }],
+    })
+
+    return Object.assign(this.response, { ingredients })
+  }
 }

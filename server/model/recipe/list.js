@@ -1,5 +1,5 @@
 const { Db, Bootstrap, Settings, Jwt, Misc } = require('../../middleware/index')
-const { RecipeManager } = require('../../constructor/index')
+const { RecipeManager, MultipleData } = require('../../constructor/index')
 
 module.exports = async function (_req) {
   let query = _req.query
@@ -94,6 +94,8 @@ module.exports = async function (_req) {
     // On rend un minimum l'anonymat dans les noms de famille
     for (const d of data) {
       RecipeManager.sanitizeRead(d)
+      const multipleData = new MultipleData(d)
+      await multipleData.recipesFoodTypes(d.slug)
     }
 
     const currentRows = req && req.length

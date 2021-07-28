@@ -66,7 +66,9 @@ module.exports = async function (_req) {
 
       const multipleData = new MultipleData(response)
       await multipleData.recipesComments(query, slug)
-      await multipleData.recipesInstructions('pizza-orientale')
+      await multipleData.recipesInstructions(slug)
+      await multipleData.recipesFoodTypes(slug)
+      await multipleData.recipesIngredients(slug)
 
       response = ReorganizeData.view(response)
     } else {
