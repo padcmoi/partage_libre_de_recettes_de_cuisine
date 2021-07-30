@@ -60,7 +60,7 @@ module.exports = async function (_req) {
         'SELECT ? ' +
         'FROM recipes AS r ' +
         'LEFT JOIN count_pictures AS cp ON(r.slug = cp.slug ) ' +
-        Misc.customSqlRules().leftJoin.join(' ') +
+        Misc.customSqlRules.addPictures().leftJoin.join(' ') +
         'LEFT JOIN who_is_owner AS wio ON(r.created_by = wio.username ) ' +
         'LEFT JOIN has_favorite AS hf ON(? = hf.created_by AND r.slug = hf.slug ) ' +
         'WHERE is_lock = 0 ' +
@@ -76,7 +76,7 @@ module.exports = async function (_req) {
             'r.preparation_time + r.cooking_time AS total_time, ' +
             'r.season_winter, r.season_autumn, r.season_summer, r.season_spring, ' +
             'r.liked, r.disliked, ' +
-            Misc.customSqlRules().prepStat.join(',') +
+            Misc.customSqlRules.addPictures().prepStat.join(',') +
             ',' +
             'cp.count_pictures '
         ),
