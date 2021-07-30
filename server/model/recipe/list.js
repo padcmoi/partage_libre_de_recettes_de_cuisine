@@ -64,6 +64,7 @@ module.exports = async function (_req) {
         'LEFT JOIN who_is_owner AS wio ON(r.created_by = wio.username ) ' +
         'LEFT JOIN has_favorite AS hf ON(? = hf.created_by AND r.slug = hf.slug ) ' +
         'WHERE is_lock = 0 ' +
+        Misc.customSqlRules.showByFoodsTypes(query, true, false) +
         'AND season_winter LIKE ? AND season_autumn LIKE ? AND season_summer LIKE ? AND season_spring LIKE ? ' +
         `${operator_where_1} ${hide_without_pictures} ${operator_where_2} ${filter} ${tableData.orderBy} ${tableData.limit}`,
       preparedStatement: [
