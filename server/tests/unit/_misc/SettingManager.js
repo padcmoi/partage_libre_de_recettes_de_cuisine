@@ -57,6 +57,23 @@ module.exports = class SettingManager {
   }
 
   /**
+   * Configure une ou plusieurs colonne de la table settings
+   * afin de pouvoir effectuer des tests sans restrictions
+   *
+   * @param {Object} Obj
+   *
+   * @returns {Boolean} Reussi ?
+   */
+  async setData(Obj) {
+    if (typeof Obj !== 'object') return false
+    await Db.merge({
+      query: 'UPDATE `settings` SET ? LIMIT 1',
+      preparedStatement: [Obj],
+    })
+    return true
+  }
+
+  /**
    * Restaure la table settings aux paramètres par défaut
    *
    * @void

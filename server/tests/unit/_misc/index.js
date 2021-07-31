@@ -10,4 +10,5 @@ module.exports = {
   Recipe: require('./recipe/Recipe'),
   getCategorie: require('./recipe/getCategorie'),
   RecipeInstruction: require('./recipe/RecipeInstruction'),
+  RecipeFoodsTypes: require('./recipe/RecipeFoodsTypes'),
 }

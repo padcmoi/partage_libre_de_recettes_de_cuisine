@@ -1,2 +1,2 @@
 require('./purge.spec')
-require('./recipe/instruction.spec')
+require('./recipe/list.spec')
