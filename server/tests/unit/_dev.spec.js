@@ -1,2 +1,2 @@
 require('./purge.spec')
-require('./recipe/list.spec')
+// require('./recipe/view.spec')
