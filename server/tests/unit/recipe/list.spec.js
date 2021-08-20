@@ -40,7 +40,7 @@ describe('GET /recipe', () => {
 
     recipeFoodsTypes = new RecipeFoodsTypes()
 
-    for (let idx = 0; idx < 30; idx++) {
+    for (let idx = 0; idx < 25; idx++) {
       const recipe = new Recipe(request, access_token)
       await recipe.add()
     }
@@ -69,11 +69,12 @@ describe('GET /recipe', () => {
 
   it('Show data without filter, without sorting', async (done) => {
     const response = await request
-      .get('/recipe?currentPage=6&perPage=6&sortBy=created_at&sortDesc=false')
+      .get('/recipe?currentPage=3&perPage=11&sortBy=created_at&sortDesc=false')
       .then((response) => response.body)
 
-    expect(response.data.length).toBe(6)
-    expect(response.table.currentRows).toBe(6)
+    expect(response.data.length).toBeGreaterThanOrEqual(8)
+    expect(response.table.currentRows).toBeGreaterThanOrEqual(8)
+    expect(response.table.pageNumber).toBeGreaterThanOrEqual(3)
     expect(response.table.state.sorter).toBeTruthy()
     expect(response.table.state.limit).toBeTruthy()
     expect(response.table.state.filter).toBeFalsy()
@@ -90,9 +91,11 @@ describe('GET /recipe', () => {
     for (let i = 0; i < response.data.length; i++) {
       if (response.data[i].slug === slugs[0]) hasSlug = true
     }
+
     expect(hasSlug).toBeTruthy()
     expect(response.table.currentRows).toBeGreaterThanOrEqual(1)
-    expect(response.table.totalRows).toBeGreaterThanOrEqual(30)
+    expect(response.table.totalRows).toBeGreaterThanOrEqual(1)
+    expect(response.table.pageNumber).toBeGreaterThanOrEqual(1)
     expect(response.table.state.sorter).toBeFalsy()
     expect(response.table.state.limit).toBeTruthy()
     expect(response.table.state.filter).toBeTruthy()
@@ -102,11 +105,12 @@ describe('GET /recipe', () => {
 
   it('Show 6 data starting with the 6th result and sorting by created date in descending order', async (done) => {
     const response = await request
-      .get('/recipe?currentPage=6&perPage=6&sortBy=created_at&sortDesc=false')
+      .get('/recipe?currentPage=3&perPage=11&sortBy=created_at&sortDesc=false')
       .then((response) => response.body)
 
-    expect(response.data.length).toBe(6)
-    expect(response.table.currentRows).toBe(6)
+    expect(response.data.length).toBeGreaterThanOrEqual(8)
+    expect(response.table.currentRows).toBeGreaterThanOrEqual(8)
+    expect(response.table.pageNumber).toBeGreaterThanOrEqual(3)
     expect(response.table.state.sorter).toBeTruthy()
     expect(response.table.state.limit).toBeTruthy()
     expect(response.table.state.filter).toBeFalsy()

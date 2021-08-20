@@ -9,6 +9,7 @@ const {
   Recipe,
   RecipeInstruction,
   RecipeFoodsTypes,
+  RecipeIngredients,
   goLogin,
 } = require('../_misc/index')
 
@@ -19,6 +20,7 @@ describe('GET /recipe/:slug', () => {
     fixtureManager,
     recipeInstruction,
     recipeFoodsTypes,
+    recipeIngredients,
     fixtures,
     login_response,
     access_token,
@@ -45,6 +47,12 @@ describe('GET /recipe/:slug', () => {
     recipeInstruction.token = access_token
 
     recipeFoodsTypes = new RecipeFoodsTypes()
+
+    recipeIngredients = new RecipeIngredients(request, csrf_header)
+    recipeIngredients.token = access_token
+
+    recipeIngredients.add("L'ail à Gous'dour - Pk pas", '-', null)
+    recipeIngredients.use('pizza-vegetarienne', 'oeuf', 2, 'pincée')
   })
 
   describe('Fixtures', () => {
@@ -92,8 +100,6 @@ describe('GET /recipe/:slug', () => {
       res = await request
         .get('/recipe/' + slug)
         .then((response) => response.body)
-
-      // console.log(res)
     })
 
     it('Structure exist', async (done) => {
@@ -144,6 +150,7 @@ describe('GET /recipe/:slug', () => {
       expect(res.comments).toStrictEqual({
         table: [],
         currentRows: 0,
+        pageNumber: 0,
         totalRows: 0,
         state: { sorter: false, limit: true, filter: false },
       })

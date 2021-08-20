@@ -48,6 +48,25 @@ module.exports = class FixtureManager {
    */
   async removeAll() {
     await Db.delete({
+      query: 'DELETE FROM `ingredients` WHERE ingredient LIKE ?',
+      preparedStatement: ['%___TEST_UNITAIRES___%'],
+    })
+
+    await Db.delete({
+      query: 'DELETE FROM `ingredients_list` WHERE ingredient LIKE ?',
+      preparedStatement: ['%___TEST_UNITAIRES___%'],
+    })
+
+    await Db.delete({
+      query:
+        'DELETE FROM `recipes` WHERE `created_by` = ( SELECT `username` FROM `account` WHERE ? AND ? LIMIT 1)',
+      preparedStatement: [
+        { firstname: 'Test___@units_tests.na' },
+        { lastname: 'TEST___@UNITS_TESTS.NA' },
+      ],
+    })
+
+    await Db.delete({
       query: 'DELETE FROM `account` WHERE ? AND ?',
       preparedStatement: [
         { firstname: 'Test___@units_tests.na' },
@@ -127,5 +146,37 @@ module.exports = class FixtureManager {
         preparedStatement: [this.fixtures],
       })
     }
+  }
+
+  /**
+   * est un admin sur la fixture généré
+   *
+   * @void
+   */
+  async setAdmin() {
+    if (!this.fixtures) return
+
+    const username = this.fixtures.username || ''
+
+    await Db.merge({
+      query: 'UPDATE `account` SET `is_admin` = 1 WHERE ? LIMIT 1',
+      preparedStatement: [{ username }],
+    })
+  }
+
+  /**
+   * simple user sur la fixture généré
+   *
+   * @void
+   */
+  async removeAdmin() {
+    if (!this.fixtures) return
+
+    const username = this.fixtures.username || ''
+
+    await Db.merge({
+      query: 'UPDATE `account` SET `is_admin` = 0 WHERE ? LIMIT 1',
+      preparedStatement: [{ username }],
+    })
   }
 }

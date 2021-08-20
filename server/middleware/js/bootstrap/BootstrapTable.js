@@ -21,6 +21,7 @@ module.exports = class BootstrapTable {
 
     this.return_data = {
       state: { sorter: false, limit: false, filter: false },
+      offset: 0,
       orderBy: '',
       limit: '',
       filter: undefined,
@@ -162,13 +163,24 @@ module.exports = class BootstrapTable {
 
     this.return_data.limit = ''
 
-    let limit = parseInt(this.query['currentPage']) || 0
+    let limit = parseInt(this.query['currentPage']) || 1
     let offset = parseInt(this.query['perPage']) || parseInt(this.limitPerPage)
 
     // On définit la limite d'affichage par page
     if (offset > parseInt(this.limitPerPage)) {
       offset = parseInt(this.limitPerPage)
     }
+
+    // Table Bootstrap Vue commence à 1
+    // et c'est le numéro de page qu'il faut obtenir
+    limit = limit * offset - offset
+
+    // Garde fou pour les valeurs négatives
+    if (limit < 0 || offset < 0) {
+      limit = offset = 0
+    }
+
+    this.return_data.offset = parseInt(offset)
 
     this.return_data.limit += ' LIMIT '
     this.return_data.limit += parseInt(limit)

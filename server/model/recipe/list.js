@@ -41,7 +41,8 @@ module.exports = async function (_req) {
     const tableData = await _bootstrapTable.get()
     const filter = await _bootstrapTable.where(false)
 
-    const state = tableData.state
+    const state = tableData.state,
+      offset = tableData.offset
 
     // Cache les recettes sans images
     if (parseInt(query.hide_without_pictures)) {
@@ -102,12 +103,25 @@ module.exports = async function (_req) {
     const currentRows = req && req.length
 
     req = await Db.get({
-      query: 'SELECT COUNT(*) AS totalRows FROM recipes LIMIT 1',
+      query:
+        'SELECT COUNT(*) AS totalRows FROM recipes AS r ' +
+        'WHERE is_lock = 0 ' +
+        Misc.customSqlRules.showByFoodsTypes(query, true, false) +
+        'AND season_winter LIKE ? AND season_autumn LIKE ? AND season_summer LIKE ? AND season_spring LIKE ? ' +
+        `${operator_where_1} ${hide_without_pictures} ${operator_where_2} ${filter} LIMIT 1`,
+      preparedStatement: [
+        parseInt(query.winter) || '%',
+        parseInt(query.autumn) || '%',
+        parseInt(query.summer) || '%',
+        parseInt(query.spring) || '%',
+      ],
     })
 
     const totalRows = req && req[0].totalRows
 
-    const table = { currentRows, totalRows, state }
+    const pageNumber = Math.ceil(totalRows / offset)
+
+    const table = { currentRows, totalRows, pageNumber, state }
 
     response = Object.assign({ data }, { table }, { toastMessage })
   } else if (maintenance) {

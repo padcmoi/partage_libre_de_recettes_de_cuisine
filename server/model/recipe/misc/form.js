@@ -1,10 +1,11 @@
-const { Settings } = require('../../../middleware/index')
+const { Settings, Db } = require('../../../middleware/index')
 const { MultipleData } = require('../../../constructor/index')
 const generate = require('../../csrf/generate')
 
 module.exports = async function (req) {
   // Pour les formulaires
   let response = await generate(req, req.csrfToken())
+  // let response = { csrf_token: '23' }
   delete response.expire_at
 
   const maintenance = await Settings.maintenance()
@@ -24,7 +25,6 @@ module.exports = async function (req) {
 
     await multipleData.categories()
     await multipleData.foodTypesList()
-    await multipleData.ingredientsList()
     await multipleData.ingredientsType()
     await multipleData.unitsList()
   } else {

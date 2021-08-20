@@ -1,2 +1,2 @@
 require('./purge.spec')
-// require('./recipe/view.spec')
+// require('./ingredients/create_ingredients.spec')

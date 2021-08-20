@@ -49,12 +49,57 @@ module.exports = class MultipleData {
    * @PUBLIC
    * Charge ingredients_list
    *
-   * @returns {Array}
+   * @param {Object} query
+   *
+   * @returns {Object}
    */
-  async ingredientsList() {
-    let ingredientsList = await Db.get({
-      query: 'SELECT type, ingredient, picture FROM `ingredients_list`',
+  async ingredientsList(query) {
+    if (typeof query !== 'object') return this.response
+
+    const ingredientsList = {}
+
+    const allowed_orderBy = [
+        'type',
+        'ingredient',
+        'picture',
+        'created_by',
+        'created_at',
+        'updated_at',
+      ],
+      allowed_where = ['ingredient']
+    const _bootstrapTable = Bootstrap.table(
+      query,
+      allowed_orderBy,
+      allowed_where
+    )
+
+    const tableData = await _bootstrapTable.get(),
+      state = tableData.state,
+      offset = tableData.offset,
+      orderBy = tableData.orderBy,
+      limit = tableData.limit
+    const filter = await _bootstrapTable.where(true)
+
+    const data = await Db.get({
+      query: 'SELECT ? FROM `ingredients_list` ' + filter + orderBy + limit,
+      preparedStatement: [
+        Db.toSqlString(
+          'type,ingredient,picture,' +
+            'DATE_FORMAT(`created_at`, "%d/%m/%Y %H:%i:%s") AS created_at, ' +
+            'DATE_FORMAT(`updated_at`, "%d/%m/%Y %H:%i:%s") AS updated_at '
+        ),
+      ],
     })
+    const currentRows = data && data.length
+
+    const sql_request = await Db.get({
+      query: `SELECT COUNT(*) AS totalRows FROM ingredients_list ${filter} LIMIT 1`,
+    })
+    const totalRows = sql_request && sql_request[0].totalRows
+
+    const pageNumber = Math.ceil(totalRows / offset)
+    ingredientsList.data = data
+    ingredientsList.table = { currentRows, totalRows, pageNumber, state }
 
     return Object.assign(this.response, { ingredientsList })
   }
@@ -117,16 +162,19 @@ module.exports = class MultipleData {
 
     req = await Db.get({
       query:
-        'SELECT COUNT(*) AS totalRows FROM `recipes_comments` WHERE slug LIKE ? LIMIT 1',
-      preparedStatement: [slug || '%'],
+        'SELECT COUNT(*) AS totalRows FROM `recipes_comments` WHERE slug LIKE ? AND comment LIKE ? LIMIT 1',
+      preparedStatement: [slug || '%', tableData.filter],
     })
 
     const totalRows = req && req[0].totalRows
+
+    const pageNumber = Math.ceil(totalRows / tableData.offset)
 
     const comments = {
       table,
       currentRows,
       totalRows,
+      pageNumber,
       state: tableData.state,
     }
 
@@ -143,8 +191,16 @@ module.exports = class MultipleData {
   async recipesInstructions(slug) {
     let recipesInstructions = await Db.get({
       query:
-        'SELECT num_step, instruction FROM `recipes_instructions` WHERE slug = ? ORDER BY num_step ASC',
-      preparedStatement: [slug],
+        'SELECT ? FROM `recipes_instructions` WHERE ? ORDER BY num_step ASC',
+      preparedStatement: [
+        Db.toSqlString(
+          'id_instructions,num_step,instruction,picture,' +
+            'DATE_FORMAT(`created_at`, "%d/%m/%Y %H:%i:%s") AS created_at, ' +
+            'DATE_FORMAT(`updated_at`, "%d/%m/%Y %H:%i:%s") AS updated_at '
+        ),
+
+        { slug },
+      ],
     })
 
     return Object.assign(this.response, { recipesInstructions })
@@ -195,9 +251,15 @@ module.exports = class MultipleData {
    */
   async recipesIngredients(slug) {
     let ingredients = await Db.get({
-      query:
-        'SELECT `quantity`,`type`,`ingredient`,`unit` FROM `ingredients` WHERE ?',
-      preparedStatement: [{ slug }],
+      query: 'SELECT ? FROM `ingredients` WHERE ?',
+      preparedStatement: [
+        Db.toSqlString(
+          'id_ingredients,quantity,type,ingredient,unit,' +
+            'DATE_FORMAT(`created_at`, "%d/%m/%Y %H:%i:%s") AS created_at, ' +
+            'DATE_FORMAT(`updated_at`, "%d/%m/%Y %H:%i:%s") AS updated_at '
+        ),
+        { slug },
+      ],
     })
 
     return Object.assign(this.response, { ingredients })
