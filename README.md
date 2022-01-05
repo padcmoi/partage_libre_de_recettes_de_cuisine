@@ -1,4 +1,4 @@
-### 📦 Partage ta recettes 📦
+### 📦 Partage ta recette 📦
 
 ##### *Ce projet a été réalisé dans le seul but d'apprendre à titre personnel et de mettre en pratique mes acquis, il y aura probablement des commits excessifs mais l'application à terme sera stable et pleinement fonctionnelle sur la durée, c'est l'objectif*
 Webapp de partage de recettes de cuisine/cocktails? totalement personnalisable avec Shopping list, commentaires/avis
